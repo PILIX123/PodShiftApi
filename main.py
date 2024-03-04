@@ -11,6 +11,4 @@ async def root():
 
 @app.post('/PodShift')
 async def addFeed(form: FormInputModel):
-    tt = form
-    print(type(form.recurrence[0]))
-    return {"message": "content"}
+    return {"message": type(form.recurrence[0])}
