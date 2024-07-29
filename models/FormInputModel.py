@@ -1,7 +1,7 @@
 from pydantic import BaseModel
-from models.recurences import EveryNthofMonth, EveryXDays, EveryXMonths
+from typing import Any
 
 
 class FormInputModel(BaseModel):
     url: str
-    recurrence: list[EveryNthofMonth | EveryXDays | EveryXMonths]
+    recurrence: Any
