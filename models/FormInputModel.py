@@ -1,7 +1,7 @@
 from pydantic import BaseModel
-from typing import Any
+from typing import List
 
 
 class FormInputModel(BaseModel):
     url: str
-    recurrence: Any
+    recurrence: List[str]
