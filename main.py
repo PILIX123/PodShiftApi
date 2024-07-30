@@ -15,8 +15,8 @@ async def root():
 
 @app.post('/PodShift')
 async def addFeed(form: FormInputModel):
-    test = create_rrule_from_dates(form.recurrence)
-    return {"message": f"{list(test)}"}
+    rrule = create_rrule_from_dates(form.recurrence)
+    return {"message": f"{rrule.count()}"}
 
 
 @app.get("/PodShift/{userID}/{podcastID}")
