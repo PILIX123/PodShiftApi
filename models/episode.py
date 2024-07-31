@@ -2,7 +2,6 @@
 from datetime import datetime
 from sqlmodel import Field, SQLModel, Relationship
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 if TYPE_CHECKING:
     from podcast import Podcast
@@ -29,7 +28,7 @@ class EpisodeBase(SQLModel):
     published_date: str | None
     title: str | None
     date_time: datetime | None
-    podcast_id: int = Field(foreign_key="podcast.id")
+    podcast_id: int | None = Field(foreign_key="podcast.id")
 
 
 class Episode(EpisodeBase, table=True):

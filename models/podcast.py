@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlmodel import Field, SQLModel, Relationship
 from typing import List, TYPE_CHECKING
-from uuid import UUID
+
 if TYPE_CHECKING:
     from episode import Episode
 
