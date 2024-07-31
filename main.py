@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from models.forminputmodel import FormInputModel
 from pyPodcastParser.Podcast import Podcast as pc
 from pyPodcastParser.Item import Item
@@ -8,8 +8,8 @@ from contextlib import asynccontextmanager
 from db import init_db, get_session
 from models.episode import Episode
 from models.podcast import Podcast
-from models.user import User
 from sqlmodel import Session
+from sqlalchemy.exc import IntegrityError
 
 
 @asynccontextmanager
@@ -35,6 +35,7 @@ async def addFeed(form: FormInputModel):
 async def addTestPodcast(form: FormInputModel, session: Session = Depends(get_session)):
     t = get(form.url).content
     p = pc(t)
+
     podcast = Podcast(
         copyright=p.copyright,
         creative_commons=p.creative_commons,
@@ -65,9 +66,9 @@ async def addTestPodcast(form: FormInputModel, session: Session = Depends(get_se
         date_time=p.date_time,
     )
     session.add(podcast)
-    testing: list[Item] = p.items
-    if testing:
-        for episodes in testing:
+    items: list[Item] = p.items
+    if items:
+        for episodes in items:
             episode = Episode(
                 author=episodes.author,
                 comments=episodes.comments,
@@ -93,10 +94,16 @@ async def addTestPodcast(form: FormInputModel, session: Session = Depends(get_se
                 podcast=podcast
             )
             session.add(episode)
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError as e:
+        if ("UNIQUE" in e.orig.args[0]):
+            return HTTPException(status_code=403, detail="Le podcast exist déjà.")
+        else:
+            return HTTPException(status_code=500)
     session.refresh(podcast)
 
 
-@app.get("/PodShift/{userID}/{podcastID}")
-async def getCustomFeed(userID, podcastID):
+@app.get("/PodShift/{customPodcastGUID}")
+async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_session)):
     pass

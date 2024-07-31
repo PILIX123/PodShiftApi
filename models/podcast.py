@@ -31,11 +31,11 @@ class PodcastBase(SQLModel):
     owner_name: str | None
     owner_email: str | None
     subtitle: str | None
-    title: str | None
     web_master: str | None
     date_time: datetime | None
 
 
 class Podcast(PodcastBase, table=True):
     id: int = Field(default=None, primary_key=True)
+    title: str = Field(default=None, unique=True)
     episodes: List["Episode"] = Relationship(back_populates="podcast")
