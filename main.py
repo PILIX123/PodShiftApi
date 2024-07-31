@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends
 from models.forminputmodel import FormInputModel
 from pyPodcastParser.Podcast import Podcast as pc
 from pyPodcastParser.Item import Item
