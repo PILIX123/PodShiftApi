@@ -4,6 +4,7 @@ from typing import List, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from episode import Episode
+    from custompodcast import CustomPodcast
 
 
 class PodcastBase(SQLModel):
@@ -39,3 +40,5 @@ class Podcast(PodcastBase, table=True):
     id: int = Field(default=None, primary_key=True)
     title: str = Field(default=None, unique=True)
     episodes: List["Episode"] = Relationship(back_populates="podcast")
+    customPodcasts: List["CustomPodcast"] = Relationship(
+        back_populates="podcast")

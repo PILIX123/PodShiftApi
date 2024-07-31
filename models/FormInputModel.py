@@ -1,12 +1,16 @@
 from pydantic import BaseModel
-from typing import List
+from enum import IntEnum
+from dateutil.rrule import WEEKLY, DAILY, MONTHLY, YEARLY
 
-"""
-    Front end will get the number of episodes and make the rrule and then transmit it to 
-    the backend where the logic will be used to create all the data inside the database
-"""
+
+class ReccurenceEnum(IntEnum):
+    WEEKLY = WEEKLY,
+    DAILY = DAILY,
+    MONTHLY = MONTHLY,
+    YEARLY = YEARLY
 
 
 class FormInputModel(BaseModel):
     url: str
-    recurrence: List[str]
+    recurrence: ReccurenceEnum
+    everyX: int = 1
