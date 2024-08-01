@@ -161,27 +161,6 @@ async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_sessio
     ET.SubElement(image, "height").text = podcast.image_height
     ET.SubElement(image, "title").text = podcast.image_title
 
-    feed = rfeed.Feed(
-        title=f"Custom {podcast.title} ditribution",
-        link=podcast.link,
-        description=podcast.description,
-        language=podcast.language,
-        copyright=podcast.copyright,
-        managingEditor=podcast.managing_editor,
-        webMaster=podcast.web_master,
-        pubDate=podcast.published_date,
-        lastBuildDate=podcast.last_build_date,
-        categories=None,
-        generator=podcast.generator,
-        ttl=None,
-        image=rfeed.Image(
-            podcast.image_url,
-            podcast.image_title,
-            podcast.image_link,
-            podcast.image_width,
-            podcast.image_height,
-        ),
-    )
     for date in json.loads(customFeed.dateToPostAt):
         dt = parse(date)
         if (dt > datetime.now()):
