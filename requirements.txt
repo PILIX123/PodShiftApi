@@ -3,4 +3,3 @@ sqlmodel
 pyPodcastParser
 requests
 python-dateutil
-feedgen
