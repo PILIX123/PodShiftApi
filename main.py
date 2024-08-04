@@ -21,14 +21,11 @@ from models.forminputmodel import FormInputModel
 from models.episode import Episode
 from models.podcast import Podcast
 from models.custompodcast import CustomPodcast
-from models.tespodcast import TestPodcast
-from models.testepisode import TestEpisode
-from models.testcutompodcast import TestCustomPodcast
 
 
 def updateFeeds():
     session = next(get_session())
-    stmnt = select(TestPodcast)
+    stmnt = select(Podcast)
     r = session.exec(stmnt)
     for podcast in r:
         feed = ET.fromstring(get(podcast.url).content.decode())
@@ -39,7 +36,7 @@ def updateFeeds():
         if latestEpisode == latestDbEpisode.xml:
             continue
         else:
-            podcast.episodes.append(TestEpisode(
+            podcast.episodes.append(Episode(
                 xml=latestEpisode, podcast=podcast))
             session.commit()
             for subcription in podcast.customPodcasts:
@@ -78,81 +75,42 @@ async def root():
 
 @app.post('/PodShift')
 async def addFeed(form: FormInputModel, session: Session = Depends(get_session)):
-    t = get(form.url).content
-    p = pc(t)
-
-    stmnt = select(Podcast).where(Podcast.title == p.title)
-    r = session.exec(stmnt).one_or_none()
-    podcast = r if r is not None else Podcast(
-        copyright=p.copyright,
-        creative_commons=p.creative_commons,
-        description=p.description,
-        generator=p.generator,
-        image_title=p.image_title,
-        image_url=p.image_url,
-        image_link=p.image_link,
-        image_width=p.image_width,
-        image_height=p.image_height,
-        itunes_author_name=p.itunes_author_name,
-        itunes_block=p.itunes_block,
-        itunes_complete=p.itunes_complete,
-        itunes_explicit=p.itunes_explicit,
-        itune_image=p.itune_image,
-        itunes_new_feed_url=p.itunes_new_feed_url,
-        language=p.language,
-        last_build_date=p.last_build_date,
-        link=p.link,
-        managing_editor=p.managing_editor,
-        published_date=p.published_date,
-        pubsubhubbub=p.pubsubhubbub,
-        owner_name=p.owner_name,
-        owner_email=p.owner_email,
-        subtitle=p.subtitle,
-        title=p.title,
-        web_master=p.web_master,
-        date_time=p.date_time,
-    )
-    if (r is None):
-        session.add(podcast)
-        items: list[Item] = p.items
-        if items:
-            for episodes in items:
-                episode = Episode(
-                    author=episodes.author,
-                    comments=episodes.comments,
-                    creative_commons=episodes.creative_commons,
-                    description=episodes.description,
-                    enclosure_url=episodes.enclosure_url,
-                    enclosure_type=episodes.enclosure_type,
-                    enclosure_length=episodes.enclosure_length,
-                    itunes_author_name=episodes.itunes_author_name,
-                    itunes_block=episodes.itunes_block,
-                    itunes_closed_captioned=episodes.itunes_closed_captioned,
-                    itunes_duration=episodes.itunes_duration,
-                    itunes_explicit=episodes.itunes_explicit,
-                    itune_image=episodes.itune_image,
-                    itunes_order=episodes.itunes_order,
-                    itunes_subtitle=episodes.itunes_subtitle,
-                    itunes_summary=episodes.itunes_summary,
-                    link=episodes.link,
-                    published_date=episodes.published_date,
-                    title=episodes.title,
-                    date_time=episodes.date_time,
-                    podcast_id=podcast.id,
-                    podcast=podcast
-                )
-                session.add(episode)
+    root = ET.fromstring(get(form.url).content.decode())
+    channel = root.find("channel")
+    episodes = []
+    for item in channel.findall("item"):
+        episodes.append(ET.tostring(item, encoding='unicode'))
+        channel.remove(item)
+    podcast = ET.tostring(root, encoding='unicode')
+    tp = Podcast(xml=podcast, url=form.url)
+    session.add(tp)
+    if episodes:
+        for episode in reversed(episodes):
+            te = Episode(xml=episode, podcast=tp)
+            session.add(te)
+    try:
         session.commit()
-        session.refresh(podcast)
+    except IntegrityError as e:
+        session.rollback()
+        if "UNIQUE" in e.args[0]:
+            tp = session.exec(select(Podcast).where(
+                Podcast.xml == podcast)).one_or_none()
+        else:
+            raise HTTPException(status_code=409, detail=f"{e.detail}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     rr = rrule(
         freq=form.recurrence,
         dtstart=datetime.now(),
         interval=form.everyX,
-        count=len(p.items)
+        count=len(episodes)
     )
     customPodcast = CustomPodcast(
         dateToPostAt=json.dumps([date.isoformat() for date in list(rr)]),
-        podcast=podcast
+        interval=form.everyX,
+        freq=form.recurrence,
+        podcast=tp
     )
     session.add(customPodcast)
     session.commit()
@@ -169,19 +127,19 @@ async def addTestPodcast(form: FormInputModel, session: Session = Depends(get_se
         episodes.append(ET.tostring(item, encoding='unicode'))
         channel.remove(item)
     podcast = ET.tostring(root, encoding='unicode')
-    tp = TestPodcast(xml=podcast, url=form.url)
+    tp = Podcast(xml=podcast, url=form.url)
     session.add(tp)
     if episodes:
         for episode in reversed(episodes):
-            te = TestEpisode(xml=episode, podcast=tp)
+            te = Episode(xml=episode, podcast=tp)
             session.add(te)
     try:
         session.commit()
     except IntegrityError as e:
         session.rollback()
         if "UNIQUE" in e.args[0]:
-            tp = session.exec(select(TestPodcast).where(
-                TestPodcast.xml == podcast)).one_or_none()
+            tp = session.exec(select(Podcast).where(
+                Podcast.xml == podcast)).one_or_none()
         else:
             raise HTTPException(status_code=409, detail=f"{e.detail}")
     except Exception as e:
@@ -193,7 +151,7 @@ async def addTestPodcast(form: FormInputModel, session: Session = Depends(get_se
         interval=form.everyX,
         count=len(episodes)
     )
-    customPodcast = TestCustomPodcast(
+    customPodcast = CustomPodcast(
         dateToPostAt=json.dumps([date.isoformat() for date in list(rr)]),
         interval=form.everyX,
         freq=form.recurrence,
