@@ -1,12 +1,22 @@
+from datetime import datetime
+import json
+from xml.etree import ElementTree as ET
+
 from fastapi import FastAPI, Depends, HTTPException
 from pyPodcastParser.Podcast import Podcast as pc
 from pyPodcastParser.Item import Item
 from requests import get
-from dateutil.rrule import rrule, rrulestr
+from dateutil.rrule import rrule
 from dateutil.parser import parse
-from db import init_db, get_session
+from sqlalchemy.exc import IntegrityError
+
 from sqlmodel import Session, select
 from contextlib import asynccontextmanager
+
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+
+from db import init_db, get_session
 from models.forminputmodel import FormInputModel
 from models.episode import Episode
 from models.podcast import Podcast
@@ -14,12 +24,6 @@ from models.custompodcast import CustomPodcast
 from models.tespodcast import TestPodcast
 from models.testepisode import TestEpisode
 from models.testcutompodcast import TestCustomPodcast
-from sqlalchemy.exc import IntegrityError
-from datetime import datetime
-import json
-from xml.etree import ElementTree as ET
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
 
 
 def updateFeeds():
