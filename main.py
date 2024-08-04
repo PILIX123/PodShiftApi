@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from pyPodcastParser.Podcast import Podcast as pc
 from pyPodcastParser.Item import Item
 from requests import get
@@ -11,9 +11,14 @@ from models.forminputmodel import FormInputModel
 from models.episode import Episode
 from models.podcast import Podcast
 from models.custompodcast import CustomPodcast
+from models.tespodcast import TestPodcast
+from models.testepisode import TestEpisode
+from models.testcutompodcast import TestCustomPodcast
+from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 import json
 from xml.etree import ElementTree as ET
+from bs4 import BeautifulSoup as bs
 
 
 @asynccontextmanager
@@ -30,13 +35,7 @@ async def root():
 
 
 @app.post('/PodShift')
-async def addFeed(form: FormInputModel):
-
-    return {"message": f"tttte"}
-
-
-@app.post("/test")
-async def addTestPodcast(form: FormInputModel, session: Session = Depends(get_session)):
+async def addFeed(form: FormInputModel, session: Session = Depends(get_session)):
     t = get(form.url).content
     p = pc(t)
 
@@ -112,6 +111,49 @@ async def addTestPodcast(form: FormInputModel, session: Session = Depends(get_se
     customPodcast = CustomPodcast(
         dateToPostAt=json.dumps([date.isoformat() for date in list(rr)]),
         podcast=podcast
+    )
+    session.add(customPodcast)
+    session.commit()
+    session.refresh(customPodcast)
+    return {"url": f"http://localhost:8000/PodShift/{customPodcast.UUID}"}
+
+
+@app.post("/test")
+async def addTestPodcast(form: FormInputModel, session: Session = Depends(get_session)):
+    root = ET.fromstring(get(form.url).content.decode())
+    channel = root.find("channel")
+    episodes = []
+    for item in channel.findall("item"):
+        episodes.append(ET.tostring(item, encoding='unicode'))
+        channel.remove(item)
+    podcast = ET.tostring(root, encoding='unicode')
+    tp = TestPodcast(xml=podcast)
+    session.add(tp)
+    if episodes:
+        for episode in episodes:
+            te = TestEpisode(xml=episode, podcast=tp)
+            session.add(te)
+    try:
+        session.commit()
+    except IntegrityError as e:
+        session.rollback()
+        if "UNIQUE" in e.args[0]:
+            tp = session.exec(select(TestPodcast).where(
+                TestPodcast.xml == podcast)).one_or_none()
+        else:
+            raise HTTPException(status_code=409, detail=f"{e.detail}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    rr = rrule(
+        freq=form.recurrence,
+        dtstart=datetime.now(),
+        interval=form.everyX,
+        count=len(episodes)
+    )
+    customPodcast = TestCustomPodcast(
+        dateToPostAt=json.dumps([date.isoformat() for date in list(rr)]),
+        podcast=tp
     )
     session.add(customPodcast)
     session.commit()
