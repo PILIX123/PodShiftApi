@@ -9,6 +9,8 @@ if TYPE_CHECKING:
 class TestCustomPodcastBase(SQLModel):
     dateToPostAt: str
     podcast_id: int | None = Field(foreign_key="testpodcast.id")
+    freq: int
+    interval: int
 
 
 class TestCustomPodcast(TestCustomPodcastBase, table=True):

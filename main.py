@@ -38,6 +38,18 @@ def updateFeeds():
             podcast.episodes.append(TestEpisode(
                 xml=latestEpisode, podcast=podcast))
             session.commit()
+            for subcription in podcast.customPodcasts:
+                dateToPostAt = json.loads(subcription.dateToPostAt)
+                startFreq = dateToPostAt[0]
+                newRrule = rrule(
+                    freq=subcription.freq,
+                    dtstart=parse(startFreq),
+                    interval=subcription.interval,
+                    count=len(podcast.episodes)
+                )
+                subcription.dateToPostAt = json.dumps(
+                    [date.isoformat() for date in list(newRrule)])
+                session.commit()
 
 
 scheduler = BackgroundScheduler()
@@ -179,6 +191,8 @@ async def addTestPodcast(form: FormInputModel, session: Session = Depends(get_se
     )
     customPodcast = TestCustomPodcast(
         dateToPostAt=json.dumps([date.isoformat() for date in list(rr)]),
+        interval=form.everyX,
+        freq=form.recurrence,
         podcast=tp
     )
     session.add(customPodcast)
