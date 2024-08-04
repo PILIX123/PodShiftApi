@@ -3,8 +3,6 @@ import json
 from xml.etree import ElementTree as ET
 
 from fastapi import FastAPI, Depends, HTTPException
-from pyPodcastParser.Podcast import Podcast as pc
-from pyPodcastParser.Item import Item
 from requests import get
 from dateutil.rrule import rrule
 from dateutil.parser import parse
