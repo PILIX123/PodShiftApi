@@ -18,7 +18,6 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 import json
 from xml.etree import ElementTree as ET
-from bs4 import BeautifulSoup as bs
 
 
 @asynccontextmanager
