@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from pyPodcastParser.Podcast import Podcast as pc
 from pyPodcastParser.Item import Item
 from requests import get
-from dateutil.rrule import rrule
+from dateutil.rrule import rrule, rrulestr
 from dateutil.parser import parse
 from db import init_db, get_session
 from sqlmodel import Session, select
