@@ -18,12 +18,39 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 import json
 from xml.etree import ElementTree as ET
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+
+
+def updateFeeds():
+    session = next(get_session())
+    stmnt = select(TestPodcast)
+    r = session.exec(stmnt)
+    for podcast in r:
+        feed = ET.fromstring(get(podcast.url).content.decode())
+        channel = feed.find("channel")
+        latestEpisode = ET.tostring(
+            channel.find("item"), encoding='unicode')
+        latestDbEpisode = podcast.episodes[0]
+        if latestEpisode == latestDbEpisode.xml:
+            continue
+        else:
+            podcast.episodes.append(TestEpisode(
+                xml=latestEpisode, podcast=podcast))
+            session.commit()
+
+
+scheduler = BackgroundScheduler()
+trigger = IntervalTrigger(hours=2, start_date=datetime.now())
+scheduler.add_job(updateFeeds, trigger)
+scheduler.start()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
     yield
+    scheduler.shutdown()
 
 app = FastAPI(debug=__debug__, lifespan=lifespan)
 
@@ -126,10 +153,10 @@ async def addTestPodcast(form: FormInputModel, session: Session = Depends(get_se
         episodes.append(ET.tostring(item, encoding='unicode'))
         channel.remove(item)
     podcast = ET.tostring(root, encoding='unicode')
-    tp = TestPodcast(xml=podcast)
+    tp = TestPodcast(xml=podcast, url=form.url)
     session.add(tp)
     if episodes:
-        for episode in episodes:
+        for episode in reversed(episodes):
             te = TestEpisode(xml=episode, podcast=tp)
             session.add(te)
     try:

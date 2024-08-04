@@ -3,3 +3,4 @@ sqlmodel
 pyPodcastParser
 requests
 python-dateutil
+apscheduler

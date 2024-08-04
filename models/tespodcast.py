@@ -8,6 +8,7 @@ if TYPE_CHECKING:
 
 class BaseTestPodacast(SQLModel):
     xml: str = Field(default=None, unique=True)
+    url: str
 
 
 class TestPodcast(BaseTestPodacast, table=True):
