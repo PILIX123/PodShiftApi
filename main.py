@@ -2,7 +2,7 @@ from datetime import datetime
 import json
 from xml.etree import ElementTree as ET
 
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Response
 from requests import get
 from dateutil.rrule import rrule
 from dateutil.parser import parse
@@ -100,7 +100,7 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
 
     rr = rrule(
         freq=form.recurrence,
-        dtstart=datetime.now(),
+        dtstart=datetime.date(),
         interval=form.everyX,
         count=len(episodes)
     )
@@ -164,48 +164,15 @@ async def addTestPodcast(form: FormInputModel, session: Session = Depends(get_se
 @app.get("/PodShift/{customPodcastGUID}")
 async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_session)):
     customFeed = session.get(CustomPodcast, customPodcastGUID)
-    podcast = customFeed.podcast
+    val = customFeed.podcast.xml
+    root = ET.fromstring(val)
+    channel = root.find("channel")
+    channel.find("title").text = f"Custom Frequency of {
+        channel.find("title").text}"
+    dates = [parse(d) for d in json.loads(customFeed.dateToPostAt)]
+    for index, date in enumerate(dates):
+        if date < datetime.now():
+            channel.insert(-(index+1), ET.fromstring(
+                customFeed.podcast.episodes[index].xml))
 
-    namespaces = {
-        "itunes": "http://www.itunes.com/dtds/podcast-1.0.dtd"
-    }
-    rss = ET.Element("rss", version='2.0', nsmap=namespaces)
-    channel = ET.SubElement(rss, "channel")
-    ET.SubElement(channel, "title").text = podcast.title,
-    ET.SubElement(channel, "copyright").text = podcast.copyright
-    ET.SubElement(channel, "creative_commons").text = podcast.creative_commons
-    ET.SubElement(channel, "description").text = podcast.description
-    ET.SubElement(channel, "generator").text = podcast.generator
-    ET.SubElement(channel, "language").text = podcast.language
-    ET.SubElement(channel, "pubDate").text = podcast.published_date
-
-    # Itunes
-    ET.SubElement(channel,
-                  f"{namespaces.get("itunes")}author")\
-        .text = podcast.itunes_author_name
-    ET.SubElement(channel, f"{namespaces.get("itunes")}block")\
-        .text = podcast.itunes_block
-    ET.SubElement(channel, f"{namespaces.get("itunes")}complete")\
-        .text = podcast.itunes_complete
-    ET.SubElement(channel, f"{namespaces.get("itunes")}explicit")\
-        .text = podcast.itunes_explicit
-    ET.SubElement(channel, f"{namespaces.get("itunes")}image", href=podcast.itune_image)\
-        .text = podcast.itunes_complete
-    if podcast.itunes_new_feed_url:
-        ET.SubElement(channel, f"{namespaces.get("itunes")}new-feed-url")\
-            .text = podcast.itunes_new_feed_url
-
-    # Image
-    image = ET.SubElement(channel, "image")
-    ET.SubElement(image, "url").text = podcast.image_url
-    ET.SubElement(image, "link").text = podcast.image_link
-    ET.SubElement(image, "width").text = podcast.image_width
-    ET.SubElement(image, "height").text = podcast.image_height
-    ET.SubElement(image, "title").text = podcast.image_title
-
-    for date in json.loads(customFeed.dateToPostAt):
-        dt = parse(date)
-        if (dt > datetime.now()):
-            return
-        episodes = customFeed.podcast.episodes
-    return
+    return Response(content=ET.tostring(root, encoding="unicode"), media_type="application/xml")

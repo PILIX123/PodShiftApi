@@ -14,6 +14,5 @@ class CustomPodcastBase(SQLModel):
 
 
 class CustomPodcast(CustomPodcastBase, table=True):
-    id: int = Field(default=None, primary_key=True)
     UUID: str = Field(default=str(uuid1()), primary_key=True)
     podcast: "Podcast" = Relationship(back_populates="customPodcasts")
