@@ -7,6 +7,11 @@ RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 COPY ./models ./models
 COPY ./main.py .
 COPY ./db.py .
+COPY ./migrations ./migrations
+COPY ./alembic.ini .
+COPY ./entrypoint.sh .
+RUN chmod +x /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 EXPOSE 80
 

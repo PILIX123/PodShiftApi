@@ -14,7 +14,7 @@ from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from db import init_db, get_session
+from db import get_session
 from models.forminputmodel import FormInputModel
 from models.episode import Episode
 from models.podcast import Podcast
@@ -62,7 +62,6 @@ scheduler.start()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
     yield
     scheduler.shutdown()
 

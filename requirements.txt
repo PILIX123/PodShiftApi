@@ -4,3 +4,4 @@ pyPodcastParser
 requests
 python-dateutil
 apscheduler
+alembic
