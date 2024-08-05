@@ -4,10 +4,10 @@ from dateutil.rrule import WEEKLY, DAILY, MONTHLY, YEARLY
 
 
 class ReccurenceEnum(IntEnum):
-    WEEKLY = WEEKLY,
-    DAILY = DAILY,
-    MONTHLY = MONTHLY,
-    YEARLY = YEARLY
+    WEEKLY = WEEKLY,  # 2
+    DAILY = DAILY,  # 3
+    MONTHLY = MONTHLY,  # 1
+    YEARLY = YEARLY  # 0
 
 
 class FormInputModel(BaseModel):

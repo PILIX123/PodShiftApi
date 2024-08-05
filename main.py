@@ -155,7 +155,7 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
     session.add(customPodcast)
     session.commit()
     session.refresh(customPodcast)
-    return {"url": f"http://podshift.ddns.net:8080/PodShift/{customPodcast.UUID}"}
+    return {"url": f"http://localhost:8000/PodShift/{customPodcast.UUID}"}
 
 
 @app.get("/PodShift/{customPodcastGUID}")
