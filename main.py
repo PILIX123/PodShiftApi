@@ -97,14 +97,14 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
         freq=form.recurrence,
         dtstart=datetime.date(datetime.now()),
         interval=form.everyX,
-        count=len(episodes)/form.amountOfEpisodePerX
+        count=len(episodes)/form.amountOfEpisode
     )
     customPodcast = CustomPodcast(
         dateToPostAt=json.dumps([date.isoformat() for date in list(rr)]),
         interval=form.everyX,
         freq=form.recurrence,
         podcast=tp,
-        amount=form.amountOfEpisodePerX
+        amount=form.amountOfEpisode
     )
     session.add(customPodcast)
     session.commit()
@@ -143,14 +143,14 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
         freq=form.recurrence,
         dtstart=datetime.date(datetime(2024, 1, 1)),
         interval=form.everyX,
-        count=len(episodes)/form.amountOfEpisodePerX
+        count=len(episodes)/form.amountOfEpisode
     )
     customPodcast = CustomPodcast(
         dateToPostAt=json.dumps([date.isoformat() for date in list(rr)]),
         interval=form.everyX,
         freq=form.recurrence,
         podcast=tp,
-        amount=form.amountOfEpisodePerX
+        amount=form.amountOfEpisode
     )
     session.add(customPodcast)
     session.commit()

@@ -12,6 +12,6 @@ class ReccurenceEnum(IntEnum):
 
 class FormInputModel(BaseModel):
     url: str
-    amountOfEpisodePerX: int = 1
+    amountOfEpisode: int = 1
     recurrence: ReccurenceEnum
     everyX: int = 1
