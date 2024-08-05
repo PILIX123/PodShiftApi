@@ -112,52 +112,6 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
     return {"url": f"http://podshift.ddns.net:8080/PodShift/{customPodcast.UUID}"}
 
 
-@app.post('/test')
-async def addFeed(form: FormInputModel, session: Session = Depends(get_session)):
-    root = ET.fromstring(get(form.url).content.decode())
-    channel = root.find("channel")
-    episodes = []
-    for item in channel.findall("item"):
-        episodes.append(ET.tostring(item, encoding='unicode'))
-        channel.remove(item)
-    podcast = ET.tostring(root, encoding='unicode')
-    tp = Podcast(xml=podcast, url=form.url)
-    session.add(tp)
-    if episodes:
-        for episode in reversed(episodes):
-            te = Episode(xml=episode, podcast=tp)
-            session.add(te)
-    try:
-        session.commit()
-    except IntegrityError as e:
-        session.rollback()
-        if "UNIQUE" in e.args[0]:
-            tp = session.exec(select(Podcast).where(
-                Podcast.xml == podcast)).one_or_none()
-        else:
-            raise HTTPException(status_code=409, detail=f"{e.detail}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    rr = rrule(
-        freq=form.recurrence,
-        dtstart=datetime.date(datetime(2024, 1, 1)),
-        interval=form.everyX,
-        count=len(episodes)/form.amountOfEpisode
-    )
-    customPodcast = CustomPodcast(
-        dateToPostAt=json.dumps([date.isoformat() for date in list(rr)]),
-        interval=form.everyX,
-        freq=form.recurrence,
-        podcast=tp,
-        amount=form.amountOfEpisode
-    )
-    session.add(customPodcast)
-    session.commit()
-    session.refresh(customPodcast)
-    return {"url": f"http://localhost:8000/PodShift/{customPodcast.UUID}"}
-
-
 @app.get("/PodShift/{customPodcastGUID}")
 async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_session)):
     customFeed = session.get(CustomPodcast, customPodcastGUID)
