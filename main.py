@@ -44,7 +44,7 @@ def updateFeeds():
                     freq=subcription.freq,
                     dtstart=parse(startFreq),
                     interval=subcription.interval,
-                    count=len(podcast.episodes)
+                    count=len(podcast.episodes)/subcription.amount
                 )
                 subcription.dateToPostAt = json.dumps(
                     [date.isoformat() for date in list(newRrule)])
