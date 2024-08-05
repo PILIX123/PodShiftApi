@@ -11,6 +11,7 @@ class CustomPodcastBase(SQLModel):
     podcast_id: int | None = Field(foreign_key="podcast.id")
     freq: int
     interval: int
+    amount: int
 
 
 class CustomPodcast(CustomPodcastBase, table=True):
