@@ -26,12 +26,14 @@ def updateFeeds():
     stmnt = select(Podcast)
     r = session.exec(stmnt)
     for podcast in r:
+        print(podcast.url)
         feed = ET.fromstring(get(podcast.url).content.decode())
         channel = feed.find("channel")
         latestEpisode = ET.tostring(
             channel.find("item"), encoding='unicode')
         latestDbEpisode = podcast.episodes[0]
         if latestEpisode == latestDbEpisode.xml:
+            print(f"no changes for {podcast.url}")
             continue
         else:
             podcast.episodes.append(Episode(
