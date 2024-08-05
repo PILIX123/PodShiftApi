@@ -44,7 +44,7 @@ def updateFeeds():
                     freq=subcription.freq,
                     dtstart=parse(startFreq),
                     interval=subcription.interval,
-                    count=len(podcast.episodes)
+                    count=len(podcast.episodes)/subcription.amount
                 )
                 subcription.dateToPostAt = json.dumps(
                     [date.isoformat() for date in list(newRrule)])
@@ -97,13 +97,14 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
         freq=form.recurrence,
         dtstart=datetime.date(datetime.now()),
         interval=form.everyX,
-        count=len(episodes)
+        count=len(episodes)/form.amountOfEpisode
     )
     customPodcast = CustomPodcast(
         dateToPostAt=json.dumps([date.isoformat() for date in list(rr)]),
         interval=form.everyX,
         freq=form.recurrence,
-        podcast=tp
+        podcast=tp,
+        amount=form.amountOfEpisode
     )
     session.add(customPodcast)
     session.commit()
@@ -120,9 +121,17 @@ async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_sessio
     channel.find("title").text = f"Custom Frequency of {
         channel.find("title").text}"
     dates = [parse(d) for d in json.loads(customFeed.dateToPostAt)]
-    for index, date in enumerate(dates):
-        if date < datetime.now():
-            channel.insert(-(index+1), ET.fromstring(
-                customFeed.podcast.episodes[index].xml))
-
+    if customFeed.amount < 1:
+        for index, date in enumerate(dates):
+            if date < datetime.now():
+                channel.insert(-(index+1), ET.fromstring(
+                    customFeed.podcast.episodes[index].xml))
+    else:
+        index = 0
+        for date in dates:
+            if date < datetime.now():
+                for i in range(customFeed.amount):
+                    channel.insert(-(i+1+index), ET.fromstring(
+                        customFeed.podcast.episodes[i+index].xml))
+                index += customFeed.amount
     return Response(content=ET.tostring(root, encoding="unicode"), media_type="application/xml")
