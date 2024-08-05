@@ -127,9 +127,11 @@ async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_sessio
                 channel.insert(-(index+1), ET.fromstring(
                     customFeed.podcast.episodes[index].xml))
     else:
+        index = 0
         for date in dates:
             if date < datetime.now():
                 for i in range(customFeed.amount):
-                    channel.insert(-(i+1), ET.fromstring(
-                        customFeed.podcast.episodes[i].xml))
+                    channel.insert(-(i+1+index), ET.fromstring(
+                        customFeed.podcast.episodes[i+index].xml))
+                index += customFeed.amount
     return Response(content=ET.tostring(root, encoding="unicode"), media_type="application/xml")
