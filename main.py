@@ -36,6 +36,7 @@ def updateFeeds():
             print(f"no changes for {podcast.url}")
             continue
         else:
+            print(f"updating {podcast.url}")
             podcast.episodes.append(Episode(
                 xml=latestEpisode, podcast=podcast))
             session.commit()
