@@ -25,20 +25,19 @@ def updateFeeds():
     session = next(get_session())
     stmnt = select(Podcast)
     r = session.exec(stmnt)
-    # TODO: Add the refresh of each episode if there are modifications
 
     for podcast in r:
         print(podcast.url)
         feed = ET.fromstring(get(podcast.url).content.decode())
         channel = feed.find("channel")
+        episodesFromFeed = [ET.tostring(item, encoding="unicode")
+                            for item in channel.findall("item")]
         latestEpisode = ET.tostring(
             channel.find("item"), encoding='unicode')
         latestDbEpisode = podcast.episodes[-1]
         if latestEpisode == latestDbEpisode.xml:
-            print(f"no changes for {podcast.url}")
             continue
         else:
-            print(f"updating {podcast.url}")
             podcast.episodes.append(Episode(
                 xml=latestEpisode, podcast=podcast))
             session.commit()
@@ -54,6 +53,14 @@ def updateFeeds():
                 subcription.dateToPostAt = json.dumps(
                     [date.isoformat() for date in list(newRrule)])
                 session.commit()
+        session.refresh(podcast)
+        for episode, feedEpisode in zip(reversed(podcast.episodes), episodesFromFeed):
+            if episode.xml == feedEpisode:
+                continue
+            else:
+                episode.xml = feedEpisode
+                session.commit()
+    session.close()
 
 
 scheduler = BackgroundScheduler()
