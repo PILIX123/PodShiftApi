@@ -2,3 +2,4 @@
 /data
 /tmp
 /.venv
+.DS_Store
