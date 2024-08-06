@@ -31,7 +31,7 @@ def updateFeeds():
         channel = feed.find("channel")
         latestEpisode = ET.tostring(
             channel.find("item"), encoding='unicode')
-        latestDbEpisode = podcast.episodes[0]
+        latestDbEpisode = podcast.episodes[-1]
         if latestEpisode == latestDbEpisode.xml:
             print(f"no changes for {podcast.url}")
             continue
