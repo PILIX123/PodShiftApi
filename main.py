@@ -25,6 +25,8 @@ def updateFeeds():
     session = next(get_session())
     stmnt = select(Podcast)
     r = session.exec(stmnt)
+    # TODO: Add the refresh of each episode if there are modifications
+
     for podcast in r:
         print(podcast.url)
         feed = ET.fromstring(get(podcast.url).content.decode())
