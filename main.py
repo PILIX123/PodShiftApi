@@ -1,9 +1,9 @@
 from datetime import datetime
 import json
 from xml.etree import ElementTree as ET
-import logging
 
 from fastapi import FastAPI, Depends, HTTPException, Response
+from uvicorn.config import LOGGING_CONFIG
 from requests import get
 from dateutil.rrule import rrule
 from dateutil.parser import parse
@@ -64,6 +64,8 @@ def updateFeeds():
     session.close()
 
 
+LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s " + \
+    LOGGING_CONFIG["formatters"]["access"]["fmt"]
 scheduler = BackgroundScheduler()
 trigger = IntervalTrigger(hours=2, start_date=datetime.now())
 scheduler.add_job(updateFeeds, trigger)
@@ -76,11 +78,6 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown()
 
 app = FastAPI(title="PodShiftAPI", lifespan=lifespan)
-formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
-logger = logging.getLogger("uvicorn.error")
-filehdlr = logging.FileHandler("data/app.log")
-filehdlr.setFormatter(formatter)
-logger.addHandler(filehdlr)
 
 
 @app.post('/PodShift')
