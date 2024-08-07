@@ -66,6 +66,7 @@ def updateFeeds():
 
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s " + \
     LOGGING_CONFIG["formatters"]["access"]["fmt"]
+
 scheduler = BackgroundScheduler()
 trigger = IntervalTrigger(hours=2, start_date=datetime.now())
 scheduler.add_job(updateFeeds, trigger)
