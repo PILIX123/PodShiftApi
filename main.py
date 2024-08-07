@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 from xml.etree import ElementTree as ET
+import logging
 
 from fastapi import FastAPI, Depends, HTTPException, Response
 from requests import get
@@ -75,6 +76,11 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown()
 
 app = FastAPI(title="PodShiftAPI", lifespan=lifespan)
+formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+logger = logging.getLogger("uvicorn.error")
+filehdlr = logging.FileHandler("data/app.log")
+filehdlr.setFormatter(formatter)
+logger.addHandler(filehdlr)
 
 
 @app.post('/PodShift')
