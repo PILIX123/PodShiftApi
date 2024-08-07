@@ -3,6 +3,8 @@ import json
 from xml.etree import ElementTree as ET
 
 from fastapi import FastAPI, Depends, HTTPException, Response
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from uvicorn.config import LOGGING_CONFIG
 from requests import get
 from dateutil.rrule import rrule
@@ -20,6 +22,7 @@ from models.forminputmodel import FormInputModel
 from models.episode import Episode
 from models.podcast import Podcast
 from models.custompodcast import CustomPodcast
+from models.responsemodel import ResponseModel
 
 
 def updateFeeds():
@@ -124,7 +127,7 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
     session.add(customPodcast)
     session.commit()
     session.refresh(customPodcast)
-    return {"url": f"http://podshift.ddns.net:8080/PodShift/{customPodcast.UUID}"}
+    return JSONResponse(content=jsonable_encoder(ResponseModel(url=f"http://podshift.ddns.net:8080/PodShift/{customPodcast.UUID}")))
 
 
 @app.get("/PodShift/{customPodcastGUID}")
