@@ -142,7 +142,7 @@ async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_sessio
         podcastContent=customFeed.podcast.xml,
         parsedDates=[parse(d) for d in json.loads(customFeed.dateToPostAt)],
         amount=customFeed.amount,
-        listEpisodes=customFeed.podcast.episodes
+        listEpisodes=[ep.xml for ep in customFeed.podcast.episodes]
     )
 
     return Response(content=content, media_type="application/xml")

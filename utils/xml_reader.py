@@ -13,7 +13,7 @@ def createPodcast(podcastContent: str, parsedDates: list[datetime], amount: int,
             break
         for i in range(amount):
             channel.insert(-(i+1+index), ET.fromstring(
-                listEpisodes[i+index].xml))
+                listEpisodes[i+index]))
         index += amount
 
-    return ET.tostring(root, encoding="unicode")
+    return ET.tostring(root, xml_declaration=True, encoding="unicode")
