@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 import json
 from xml.etree import ElementTree as ET
@@ -67,7 +68,8 @@ def updateFeeds():
     session.close()
 
 
-# ENVIRONEMENT_URL =
+ENVIRONEMENT_URL = "localhost:8000" if os.getenv(
+    "DEBUG") else "podshift.ddns.net:8080"
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s " + \
     LOGGING_CONFIG["formatters"]["access"]["fmt"]
 
@@ -128,7 +130,7 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
     session.add(customPodcast)
     session.commit()
     session.refresh(customPodcast)
-    return JSONResponse(content=jsonable_encoder(ResponseModel(url=f"http://podshift.ddns.net:8080/PodShift/{customPodcast.UUID}")))
+    return JSONResponse(content=jsonable_encoder(ResponseModel(url=f"http://{ENVIRONEMENT_URL}/PodShift/{customPodcast.UUID}")))
 
 
 @app.get("/PodShift/{customPodcastGUID}")
