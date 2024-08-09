@@ -1,4 +1,4 @@
-FROM python:alpine
+FROM python:alpine as base
 
 ENV LANG=C.UTF-8
 WORKDIR /app
@@ -14,5 +14,11 @@ RUN chmod +x /app/entrypoint.sh
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 EXPOSE 80
+
+FROM base AS dev
+ENV DEBUG=True
+
+FROM base AS prod
+ENV DEBUG=False
 
 CMD ["fastapi", "run", "/app/main.py", "--port", "80"]
