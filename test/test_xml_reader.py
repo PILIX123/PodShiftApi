@@ -2,6 +2,7 @@ from utils.xml_reader import createPodcast
 from datetime import datetime
 from freezegun import freeze_time
 from xml.etree import ElementTree as ET
+import pytest
 
 
 @freeze_time("2024-08-09 03:03:03")
