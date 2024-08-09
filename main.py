@@ -18,12 +18,13 @@ from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from db import get_session
+from db import get_session, getCustomPodcast
 from models.forminputmodel import FormInputModel
 from models.episode import Episode
 from models.podcast import Podcast
 from models.custompodcast import CustomPodcast
 from models.responsemodel import ResponseModel
+from utils.xml_reader import createPodcast
 
 
 def updateFeeds():
@@ -91,24 +92,24 @@ app = FastAPI(title="PodShiftAPI", lifespan=lifespan)
 async def addFeed(form: FormInputModel, session: Session = Depends(get_session)):
     root = ET.fromstring(get(form.url).content.decode())
     channel = root.find("channel")
-    episodes = []
+    episodesXMLList = []
     for item in channel.findall("item"):
-        episodes.append(ET.tostring(item, encoding='unicode'))
+        episodesXMLList.append(ET.tostring(item, encoding='unicode'))
         channel.remove(item)
-    podcast = ET.tostring(root, encoding='unicode')
-    tp = Podcast(xml=podcast, url=form.url)
-    session.add(tp)
-    if episodes:
-        for episode in reversed(episodes):
-            te = Episode(xml=episode, podcast=tp)
-            session.add(te)
+    podcastXML = ET.tostring(root, encoding='unicode')
+    podcast = Podcast(xml=podcastXML, url=form.url)
+    session.add(podcast)
+    if episodesXMLList:
+        for episodeXML in reversed(episodesXMLList):
+            episode = Episode(xml=episodeXML, podcast=podcast)
+            session.add(episode)
     try:
         session.commit()
     except IntegrityError as e:
         session.rollback()
         if "UNIQUE" in e.args[0]:
-            tp = session.exec(select(Podcast).where(
-                Podcast.xml == podcast)).one_or_none()
+            podcast = session.exec(select(Podcast).where(
+                Podcast.xml == podcastXML)).one_or_none()
         else:
             raise HTTPException(status_code=409, detail=f"{e.detail}")
     except Exception as e:
@@ -118,13 +119,13 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
         freq=form.recurrence,
         dtstart=datetime.date(datetime.now()),
         interval=form.everyX,
-        count=len(episodes)/form.amountOfEpisode
+        count=len(episodesXMLList)/form.amountOfEpisode
     )
     customPodcast = CustomPodcast(
         dateToPostAt=json.dumps([date.isoformat() for date in list(rr)]),
         interval=form.everyX,
         freq=form.recurrence,
-        podcast=tp,
+        podcast=podcast,
         amount=form.amountOfEpisode
     )
     session.add(customPodcast)
@@ -135,24 +136,13 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
 
 @app.get("/PodShift/{customPodcastGUID}")
 async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_session)):
-    customFeed = session.get(CustomPodcast, customPodcastGUID)
-    val = customFeed.podcast.xml
-    root = ET.fromstring(val)
-    channel = root.find("channel")
-    channel.find("title").text = f"Custom Frequency of {
-        channel.find("title").text}"
-    dates = [parse(d) for d in json.loads(customFeed.dateToPostAt)]
-    if customFeed.amount < 1:
-        for index, date in enumerate(dates):
-            if date < datetime.now():
-                channel.insert(-(index+1), ET.fromstring(
-                    customFeed.podcast.episodes[index].xml))
-    else:
-        index = 0
-        for date in dates:
-            if date < datetime.now():
-                for i in range(customFeed.amount):
-                    channel.insert(-(i+1+index), ET.fromstring(
-                        customFeed.podcast.episodes[i+index].xml))
-                index += customFeed.amount
-    return Response(content=ET.tostring(root, encoding="unicode"), media_type="application/xml")
+    customFeed = getCustomPodcast(customPodcastGUID, session)
+
+    content = createPodcast(
+        podcastContent=customFeed.podcast.xml,
+        parsedDates=[parse(d) for d in json.loads(customFeed.dateToPostAt)],
+        amount=customFeed.amount,
+        listEpisodes=[ep.xml for ep in customFeed.podcast.episodes]
+    )
+
+    return Response(content=content, media_type="application/xml")
