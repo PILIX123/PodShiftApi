@@ -18,12 +18,13 @@ from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from db import get_session
+from db import get_session, getCustomPodcast
 from models.forminputmodel import FormInputModel
 from models.episode import Episode
 from models.podcast import Podcast
 from models.custompodcast import CustomPodcast
 from models.responsemodel import ResponseModel
+from utils.xml_reader import createPodcast
 
 
 def updateFeeds():
@@ -135,24 +136,13 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
 
 @app.get("/PodShift/{customPodcastGUID}")
 async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_session)):
-    customFeed = session.get(CustomPodcast, customPodcastGUID)
-    val = customFeed.podcast.xml
-    root = ET.fromstring(val)
-    channel = root.find("channel")
-    channel.find("title").text = f"Custom Frequency of {
-        channel.find("title").text}"
-    dates = [parse(d) for d in json.loads(customFeed.dateToPostAt)]
-    if customFeed.amount < 1:
-        for index, date in enumerate(dates):
-            if date < datetime.now():
-                channel.insert(-(index+1), ET.fromstring(
-                    customFeed.podcast.episodes[index].xml))
-    else:
-        index = 0
-        for date in dates:
-            if date < datetime.now():
-                for i in range(customFeed.amount):
-                    channel.insert(-(i+1+index), ET.fromstring(
-                        customFeed.podcast.episodes[i+index].xml))
-                index += customFeed.amount
-    return Response(content=ET.tostring(root, encoding="unicode"), media_type="application/xml")
+    customFeed = getCustomPodcast(customPodcastGUID, session)
+
+    content = createPodcast(
+        podcastContent=customFeed.podcast.xml,
+        parsedDates=[parse(d) for d in json.loads(customFeed.dateToPostAt)],
+        amount=customFeed.amount,
+        listEpisodes=customFeed.podcast.episodes
+    )
+
+    return Response(content=content, media_type="application/xml")
