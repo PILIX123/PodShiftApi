@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 import json
 from xml.etree import ElementTree as ET
@@ -23,7 +24,6 @@ from models.episode import Episode
 from models.podcast import Podcast
 from models.custompodcast import CustomPodcast
 from models.responsemodel import ResponseModel
-import os
 
 
 def updateFeeds():
