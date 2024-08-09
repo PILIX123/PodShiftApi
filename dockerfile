@@ -1,4 +1,4 @@
-FROM python:alpine as base
+FROM python:alpine AS base
 
 ENV LANG=C.UTF-8
 WORKDIR /app
@@ -17,8 +17,8 @@ EXPOSE 80
 
 FROM base AS dev
 ENV DEBUG=True
+CMD ["fastapi", "run", "/app/main.py", "--port", "80"]
 
 FROM base AS prod
 ENV DEBUG=False
-
 CMD ["fastapi", "run", "/app/main.py", "--port", "80"]
