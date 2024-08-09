@@ -67,6 +67,7 @@ def updateFeeds():
     session.close()
 
 
+# ENVIRONEMENT_URL =
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s " + \
     LOGGING_CONFIG["formatters"]["access"]["fmt"]
 
@@ -88,24 +89,24 @@ app = FastAPI(title="PodShiftAPI", lifespan=lifespan)
 async def addFeed(form: FormInputModel, session: Session = Depends(get_session)):
     root = ET.fromstring(get(form.url).content.decode())
     channel = root.find("channel")
-    episodes = []
+    episodesXMLList = []
     for item in channel.findall("item"):
-        episodes.append(ET.tostring(item, encoding='unicode'))
+        episodesXMLList.append(ET.tostring(item, encoding='unicode'))
         channel.remove(item)
-    podcast = ET.tostring(root, encoding='unicode')
-    tp = Podcast(xml=podcast, url=form.url)
-    session.add(tp)
-    if episodes:
-        for episode in reversed(episodes):
-            te = Episode(xml=episode, podcast=tp)
-            session.add(te)
+    podcastXML = ET.tostring(root, encoding='unicode')
+    podcast = Podcast(xml=podcastXML, url=form.url)
+    session.add(podcast)
+    if episodesXMLList:
+        for episodeXML in reversed(episodesXMLList):
+            episode = Episode(xml=episodeXML, podcast=podcast)
+            session.add(episode)
     try:
         session.commit()
     except IntegrityError as e:
         session.rollback()
         if "UNIQUE" in e.args[0]:
-            tp = session.exec(select(Podcast).where(
-                Podcast.xml == podcast)).one_or_none()
+            podcast = session.exec(select(Podcast).where(
+                Podcast.xml == podcastXML)).one_or_none()
         else:
             raise HTTPException(status_code=409, detail=f"{e.detail}")
     except Exception as e:
@@ -115,13 +116,13 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
         freq=form.recurrence,
         dtstart=datetime.date(datetime.now()),
         interval=form.everyX,
-        count=len(episodes)/form.amountOfEpisode
+        count=len(episodesXMLList)/form.amountOfEpisode
     )
     customPodcast = CustomPodcast(
         dateToPostAt=json.dumps([date.isoformat() for date in list(rr)]),
         interval=form.everyX,
         freq=form.recurrence,
-        podcast=tp,
+        podcast=podcast,
         amount=form.amountOfEpisode
     )
     session.add(customPodcast)
