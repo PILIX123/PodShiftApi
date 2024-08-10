@@ -112,7 +112,7 @@ def test_createPodcast():
         datetime(2024, 8, 8),
         datetime(2024, 8, 9)
     ]
-    expectedCreatedFeed: str = """<?xml version="1.0" encoding="UTF-8"?>
+    expectedCreatedFeed = """<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
     <channel>
         <title><![CDATA[Custom Frequency of Lorem ipsum feed for an interval of 1 days with 10 item(s)]]></title>
