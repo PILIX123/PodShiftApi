@@ -12,8 +12,11 @@ def createPodcast(podcastContent: str, parsedDates: list[datetime], amount: int,
         if date > datetime.now():
             break
         for i in range(amount):
-            channel.insert(-(i+1+index), ET.fromstring(
-                listEpisodes[i+index]))
+            if i == 0 and index == 0:
+                channel.append(ET.fromstring(listEpisodes[i+index]))
+            else:
+                channel.insert(-(i+1+index-1), ET.fromstring(
+                    listEpisodes[i+index]))
         index += amount
 
     return ET.tostring(root, xml_declaration=True, encoding="unicode")

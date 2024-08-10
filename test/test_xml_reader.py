@@ -1,8 +1,10 @@
-from utils.xml_reader import createPodcast
+from lxml import etree
+from xml.etree import ElementTree as ET
+
 from datetime import datetime
 from freezegun import freeze_time
-from xml.etree import ElementTree as ET
-import pytest
+
+from utils.xml_reader import createPodcast
 
 
 @freeze_time("2024-08-09 03:03:03")
@@ -162,12 +164,21 @@ def test_createPodcast():
         </item>
     </channel>
 </rss>"""
+
+    parser = etree.XMLParser(remove_blank_text=True)
+    tt = etree.XML(expectedCreatedFeed.encode('UTF-8'), parser=parser)
+    st = etree.tostring(tt)
     test = createPodcast(
         podcastContent=podcastContent,
         amount=1,
         listEpisodes=listEpisode,
         parsedDates=parsedDates
     )
+
     expected = ET.tostring(ET.fromstring(
-        expectedCreatedFeed), xml_declaration=True, encoding="unicode")
-    assert test == expected
+        st), xml_declaration=True, encoding="unicode")
+    te = etree.XML(test.encode("UTF-8"), parser=parser)
+    t = etree.tostring(te)
+    ttttt = ET.tostring(ET.fromstring(
+        t), xml_declaration=True, encoding="unicode")
+    assert ttttt == expected
