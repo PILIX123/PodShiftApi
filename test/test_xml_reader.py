@@ -177,8 +177,7 @@ def test_createPodcast():
 
     expected = ET.tostring(ET.fromstring(
         st), xml_declaration=True, encoding="unicode")
-    te = etree.XML(test.encode("UTF-8"), parser=parser)
-    t = etree.tostring(te)
-    ttttt = ET.tostring(ET.fromstring(
-        t), xml_declaration=True, encoding="unicode")
-    assert ttttt == expected
+    real = ET.tostring(ET.fromstring(
+        etree.tostring(etree.XML(test.encode("UTF-8"), parser=parser))),
+        xml_declaration=True, encoding="unicode")
+    assert real == expected
