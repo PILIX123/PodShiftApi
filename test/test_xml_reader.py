@@ -166,8 +166,6 @@ def test_createPodcast():
 </rss>"""
 
     parser = etree.XMLParser(remove_blank_text=True)
-    tt = etree.XML(expectedCreatedFeed.encode('UTF-8'), parser=parser)
-    st = etree.tostring(tt)
     test = createPodcast(
         podcastContent=podcastContent,
         amount=1,
@@ -175,8 +173,9 @@ def test_createPodcast():
         parsedDates=parsedDates
     )
 
-    expected = ET.tostring(ET.fromstring(
-        st), xml_declaration=True, encoding="unicode")
+    expected = ET.tostring(ET.fromstring(etree.tostring(
+        etree.XML(expectedCreatedFeed.encode('UTF-8'), parser=parser))),
+        xml_declaration=True, encoding="unicode")
     real = ET.tostring(ET.fromstring(
         etree.tostring(etree.XML(test.encode("UTF-8"), parser=parser))),
         xml_declaration=True, encoding="unicode")
