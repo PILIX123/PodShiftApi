@@ -20,3 +20,15 @@ def createPodcast(podcastContent: str, parsedDates: list[datetime], amount: int,
         index += amount
 
     return ET.tostring(root, xml_declaration=True, encoding="unicode")
+
+
+def extractContents(podcastContent: str) -> tuple[str, list[str]]:
+    root = ET.fromstring(podcastContent)
+    channel = root.find("channel")
+    episodesXMLList = []
+    for item in channel.findall("item"):
+        episodesXMLList.append(ET.tostring(item, encoding='unicode'))
+        channel.remove(item)
+    podcastXML = ET.tostring(root, encoding='unicode')
+
+    return podcastXML, episodesXMLList

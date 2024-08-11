@@ -18,13 +18,14 @@ from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from db import get_session, getCustomPodcast
+from db import get_session, Database, createCustomPodcast
 from models.forminputmodel import FormInputModel
 from models.episode import Episode
 from models.podcast import Podcast
 from models.custompodcast import CustomPodcast
 from models.responsemodel import ResponseModel
-from utils.xml_reader import createPodcast
+from utils.xml_reader import createPodcast, extractContents
+from utils.util import dateListRRule
 
 
 def updateFeeds():
@@ -86,57 +87,52 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown()
 
 app = FastAPI(title="PodShiftAPI", lifespan=lifespan)
+db = Database()
 
 
 @app.post('/PodShift')
 async def addFeed(form: FormInputModel, session: Session = Depends(get_session)):
-    root = ET.fromstring(get(form.url).content.decode())
-    channel = root.find("channel")
-    episodesXMLList = []
-    for item in channel.findall("item"):
-        episodesXMLList.append(ET.tostring(item, encoding='unicode'))
-        channel.remove(item)
-    podcastXML = ET.tostring(root, encoding='unicode')
-    podcast = Podcast(xml=podcastXML, url=form.url)
-    session.add(podcast)
-    if episodesXMLList:
-        for episodeXML in reversed(episodesXMLList):
-            episode = Episode(xml=episodeXML, podcast=podcast)
-            session.add(episode)
+    podcastContent = get(form.url).content.decode()
+    podcastXML, episodesXMLList = extractContents(podcastContent)
+
     try:
-        session.commit()
+        podcast = db.createNewPodcast(
+            podcastXML=podcastXML,
+            podcastUrl=form.url,
+            episodeListXML=episodesXMLList,
+            session=session
+        )
     except IntegrityError as e:
         session.rollback()
         if "UNIQUE" in e.args[0]:
-            podcast = session.exec(select(Podcast).where(
-                Podcast.xml == podcastXML)).one_or_none()
+            podcast = db.getPodcastXML(podcastXML, session)
         else:
             raise HTTPException(status_code=409, detail=f"{e.detail}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    rr = rrule(
+    listDate = dateListRRule(
         freq=form.recurrence,
         dtstart=datetime.date(datetime.now()),
         interval=form.everyX,
-        count=len(episodesXMLList)/form.amountOfEpisode
+        nbEpisodes=len(episodesXMLList),
+        amount=form.amountOfEpisode
     )
-    customPodcast = CustomPodcast(
-        dateToPostAt=json.dumps([date.isoformat() for date in list(rr)]),
+    jsonDumps = json.dumps(listDate)
+    customPodcast = db.createCustomPodcast(
+        jsonDumpDate=jsonDumps,
         interval=form.everyX,
         freq=form.recurrence,
         podcast=podcast,
-        amount=form.amountOfEpisode
+        amount=form.amountOfEpisode,
+        session=session
     )
-    session.add(customPodcast)
-    session.commit()
-    session.refresh(customPodcast)
     return JSONResponse(content=jsonable_encoder(ResponseModel(url=f"http://{ENVIRONEMENT_URL}/PodShift/{customPodcast.UUID}")))
 
 
 @app.get("/PodShift/{customPodcastGUID}")
 async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_session)):
-    customFeed = getCustomPodcast(customPodcastGUID, session)
+    customFeed = db.getCustomPodcast(customPodcastGUID, session)
 
     content = createPodcast(
         podcastContent=customFeed.podcast.xml,
