@@ -9,6 +9,8 @@ from sqlmodel import select
 from models.podcast import Podcast
 from models.episode import Episode
 
+# TOD: refactor this
+
 
 def updateFeeds():
     session = next(get_session())
