@@ -113,7 +113,7 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
 
     listDate = dateListRRule(
         freq=form.recurrence,
-        dtstart=datetime.date(datetime.now()),
+        date=datetime.date(datetime.now()),
         interval=form.everyX,
         nbEpisodes=len(episodesXMLList),
         amount=form.amountOfEpisode
