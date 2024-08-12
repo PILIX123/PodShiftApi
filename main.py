@@ -18,11 +18,10 @@ from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from db import get_session, Database, createCustomPodcast
+from db import get_session, Database
 from models.forminputmodel import FormInputModel
 from models.episode import Episode
 from models.podcast import Podcast
-from models.custompodcast import CustomPodcast
 from models.responsemodel import ResponseModel
 from utils.xml_reader import createPodcast, extractContents
 from utils.util import dateListRRule
