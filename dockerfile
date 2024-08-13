@@ -10,6 +10,8 @@ COPY ./db.py .
 COPY ./migrations ./migrations
 COPY ./alembic.ini .
 COPY ./entrypoint.sh .
+COPY ./utils ./utils
+COPY ./cronjob.py .
 RUN chmod +x /app/entrypoint.sh
 ENTRYPOINT ["/app/entrypoint.sh"]
 
