@@ -23,14 +23,15 @@ from utils.xml_reader import createPodcast, extractContents
 from utils.util import dateListRRule
 from cronjob import updateFeeds
 
-ENVIRONEMENT_URL = "localhost:8000" if os.getenv(
-    "DEBUG") == "True" else "podshift.ddns.net:8080"
+DEBUG = os.getenv("DEBUG") == "True"
+
+ENVIRONEMENT_URL = "localhost:8000" if DEBUG else "podshift.ddns.net:8080"
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s " + \
     LOGGING_CONFIG["formatters"]["access"]["fmt"]
 
 scheduler = BackgroundScheduler()
-trigger = IntervalTrigger(seconds=2, start_date=datetime.now()) if os.getenv(
-    "DEBUG") == "True" else IntervalTrigger(hours=2, start_date=datetime.now())
+trigger = IntervalTrigger(seconds=2, start_date=datetime.now()) if DEBUG\
+    else IntervalTrigger(hours=2, start_date=datetime.now())
 scheduler.add_job(updateFeeds, trigger)
 scheduler.start()
 
@@ -41,7 +42,7 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown()
 
 
-docs_url = "/docs" if os.getenv("DEBUG") == "True" else None
+docs_url = "/docs" if DEBUG else None
 app = FastAPI(title="PodShiftAPI", lifespan=lifespan, docs_url=docs_url)
 db = Database()
 
