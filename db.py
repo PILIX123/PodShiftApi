@@ -46,3 +46,6 @@ class Database():
         session.refresh(customPodcast)
 
         return customPodcast
+
+    def getAllPodcasts(self, session: Session) -> list[Podcast]:
+        session.exec(select(Podcast))

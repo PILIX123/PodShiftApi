@@ -4,22 +4,28 @@ from dateutil.rrule import rrule
 from dateutil.parser import parse
 # TODO: Needs more abstraction this shouldnt be here
 from xml.etree import ElementTree as ET
-from db import get_session
+from db import Database
 from sqlmodel import select
 from models.podcast import Podcast
 from models.episode import Episode
 
-# TOD: refactor this
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from sqlmodel import Session
+
+# TODO: refactor this 24/8/12 got to come back to this
 
 
-def updateFeeds():
-    session = next(get_session())
-    stmnt = select(Podcast)
-    r = session.exec(stmnt)
+def updateFeeds(db: Database, session: "Session"):
 
-    for podcast in r:
+    podcasts = db.getAllPodcasts(session=session)
+
+    for podcast in podcasts:
         print(podcast.url)
-        feed = ET.fromstring(get(podcast.url).content.decode())
+
+        podcastContent = get(podcast.url).content.decode()
         channel = feed.find("channel")
         episodesFromFeed = [ET.tostring(item, encoding="unicode")
                             for item in channel.findall("item")]
