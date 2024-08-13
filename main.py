@@ -1,18 +1,16 @@
 import os
 from datetime import datetime
 import json
-from xml.etree import ElementTree as ET
 
 from fastapi import FastAPI, Depends, HTTPException, Response
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from uvicorn.config import LOGGING_CONFIG
 from requests import get
-from dateutil.rrule import rrule
 from dateutil.parser import parse
 from sqlalchemy.exc import IntegrityError
 
-from sqlmodel import Session, select
+from sqlmodel import Session
 from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.background import BackgroundScheduler
