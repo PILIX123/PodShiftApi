@@ -44,5 +44,5 @@ def extractLatestEpisode(podcastContent: str) -> str:
 
 def extractTitleFromEpisode(episodeContent: str) -> str:
     item = ET.fromstring(episodeContent)
-    title = item.find("title")
+    title = item.find("title").text
     return title

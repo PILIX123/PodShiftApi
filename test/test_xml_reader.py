@@ -4,7 +4,7 @@ from xml.etree import ElementTree as ET
 from datetime import datetime
 from freezegun import freeze_time
 
-from utils.xml_reader import createPodcast, extractContents, extractLatestEpisode
+from utils.xml_reader import createPodcast, extractContents, extractLatestEpisode, extractTitleFromEpisode
 
 
 @freeze_time("2024-08-09 03:03:03")
@@ -517,3 +517,18 @@ def test_extractLatestEpisode():
         etree.XML(realEpisode.encode('UTF-8'), parser=parser))), encoding="unicode")
 
     assert realEpisode == expectedEpisode
+
+
+def test_extractTitleFromEpisode():
+    episodeContent = """<item>
+            <title><![CDATA[Lorem ipsum 2024-08-09T00:00:00Z]]></title>
+            <description><![CDATA[Consequat non amet laborum qui exercitation tempor consequat sit mollit.]]></description>
+            <link>http://example.com/test/1723161600</link>
+            <guid isPermaLink="true">http://example.com/test/1723161600</guid>
+            
+            <pubDate>Fri, 09 Aug 2024 00:00:00 GMT</pubDate>
+        </item>"""
+
+    expectedTitle = "Lorem ipsum 2024-08-09T00:00:00Z"
+    realTitle = extractTitleFromEpisode(episodeContent)
+    assert realTitle == expectedTitle
