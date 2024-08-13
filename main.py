@@ -24,13 +24,13 @@ from utils.util import dateListRRule
 from cronjob import updateFeeds
 
 ENVIRONEMENT_URL = "localhost:8000" if os.getenv(
-    "DEBUG") else "podshift.ddns.net:8080"
+    "DEBUG") == "True" else "podshift.ddns.net:8080"
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s " + \
     LOGGING_CONFIG["formatters"]["access"]["fmt"]
 
 scheduler = BackgroundScheduler()
 trigger = IntervalTrigger(seconds=2, start_date=datetime.now()) if os.getenv(
-    "DEBUG") else IntervalTrigger(hours=2, start_date=datetime.now())
+    "DEBUG") == "True" else IntervalTrigger(hours=2, start_date=datetime.now())
 scheduler.add_job(updateFeeds, trigger)
 scheduler.start()
 
@@ -40,7 +40,9 @@ async def lifespan(app: FastAPI):
     yield
     scheduler.shutdown()
 
-app = FastAPI(title="PodShiftAPI", lifespan=lifespan)
+
+docs_url = "/docs" if os.getenv("DEBUG") == "True" else None
+app = FastAPI(title="PodShiftAPI", lifespan=lifespan, docs_url=docs_url)
 db = Database()
 
 
