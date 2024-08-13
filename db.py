@@ -48,4 +48,24 @@ class Database():
         return customPodcast
 
     def getAllPodcasts(self, session: Session) -> list[Podcast]:
-        session.exec(select(Podcast))
+        r = session.exec(select(Podcast))
+        return r
+
+    def addLatestEpisode(self, latestEpisodeContent: str, podcast: Podcast, session: Session):
+        podcast.episodes.append(
+            Episode(xml=latestEpisodeContent, podcast=podcast))
+        session.commit()
+
+    def updateSubscription(self, subscription: CustomPodcast, dateToPostAt: str, session: Session):
+        subscription.dateToPostAt = dateToPostAt
+        session.commit()
+
+    def refreshEntity(self, entity: Podcast | Episode | CustomPodcast, session: Session):
+        session.refresh(entity)
+
+    def updateEpisodeContent(self, episode: Episode, episodeContent: str, session: Session):
+        episode.xml = episodeContent
+        session.commit()
+
+    def closeSession(self, session: Session):
+        session.close()

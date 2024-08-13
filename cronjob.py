@@ -1,24 +1,14 @@
 from requests import get
 import json
-from dateutil.rrule import rrule
 from dateutil.parser import parse
-# TODO: Needs more abstraction this shouldnt be here
-from xml.etree import ElementTree as ET
-from db import Database
-from sqlmodel import select
-from models.podcast import Podcast
-from models.episode import Episode
+from utils.xml_reader import extractContents, extractLatestEpisode, extractTitleFromEpisode
+from utils.util import dateListRRule
+from db import Database, get_session
 
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from sqlmodel import Session
-
-# TODO: refactor this 24/8/12 got to come back to this
-
-
-def updateFeeds(db: Database, session: "Session"):
+def updateFeeds():
+    db = Database()
+    session = next(get_session())
 
     podcasts = db.getAllPodcasts(session=session)
 
@@ -26,35 +16,37 @@ def updateFeeds(db: Database, session: "Session"):
         print(podcast.url)
 
         podcastContent = get(podcast.url).content.decode()
-        channel = feed.find("channel")
-        episodesFromFeed = [ET.tostring(item, encoding="unicode")
-                            for item in channel.findall("item")]
-        latestEpisode = ET.tostring(
-            channel.find("item"), encoding='unicode')
+
+        _, episodesFromFeed = extractContents(podcastContent)
+        latestEpisode = extractLatestEpisode(podcastContent)
         latestDbEpisode = podcast.episodes[-1]
+
         if latestEpisode == latestDbEpisode.xml:
             continue
+        elif extractTitleFromEpisode(latestEpisode) == extractTitleFromEpisode(latestDbEpisode.xml):
+            continue
         else:
-            podcast.episodes.append(Episode(
-                xml=latestEpisode, podcast=podcast))
-            session.commit()
-            for subcription in podcast.customPodcasts:
-                dateToPostAt = json.loads(subcription.dateToPostAt)
+            db.addLatestEpisode(latestEpisode, podcast, session)
+            for subscription in podcast.customPodcasts:
+                dateToPostAt = json.loads(subscription.dateToPostAt)
                 startFreq = dateToPostAt[0]
-                newRrule = rrule(
-                    freq=subcription.freq,
-                    dtstart=parse(startFreq),
-                    interval=subcription.interval,
-                    count=len(podcast.episodes)/subcription.amount
+
+                rruleStr = dateListRRule(
+                    freq=subscription.freq,
+                    date=parse(startFreq),
+                    interval=subscription.interval,
+                    nbEpisodes=len(podcast.episodes),
+                    amount=subscription.amount
                 )
-                subcription.dateToPostAt = json.dumps(
-                    [date.isoformat() for date in list(newRrule)])
-                session.commit()
-        session.refresh(podcast)
+                dateToPostAt = json.dumps(rruleStr)
+                db.updateSubscription(subscription, dateToPostAt, session)
+
+        db.refreshEntity(podcast)
+
         for episode, feedEpisode in zip(reversed(podcast.episodes), episodesFromFeed):
             if episode.xml == feedEpisode:
                 continue
             else:
-                episode.xml = feedEpisode
-                session.commit()
-    session.close()
+                db.updateEpisodeContent(episode, feedEpisode, session)
+
+    db.closeSession(session)

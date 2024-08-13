@@ -32,3 +32,17 @@ def extractContents(podcastContent: str) -> tuple[str, list[str]]:
     podcastXML = ET.tostring(root, encoding='unicode')
 
     return podcastXML, episodesXMLList
+
+
+def extractLatestEpisode(podcastContent: str) -> str:
+    root = ET.fromstring(podcastContent)
+    channel = root.find("channel")
+    latestEpisode = channel.find("item")
+
+    return ET.tostring(latestEpisode, encoding='unicode')
+
+
+def extractTitleFromEpisode(episodeContent: str) -> str:
+    item = ET.fromstring(episodeContent)
+    title = item.find("title")
+    return title
