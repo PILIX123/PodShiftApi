@@ -57,7 +57,7 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
             session=session
         )
     except IntegrityError as e:
-        session.rollback()
+        db.rollback(session)
         if "UNIQUE" in e.args[0]:
             podcast = db.getPodcastXML(podcastXML, session)
         else:

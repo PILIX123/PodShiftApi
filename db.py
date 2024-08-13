@@ -69,3 +69,6 @@ class Database():
 
     def closeSession(self, session: Session):
         session.close()
+
+    def rollback(self, session: Session):
+        session.rollback()
