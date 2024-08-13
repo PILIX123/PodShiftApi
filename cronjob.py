@@ -41,7 +41,7 @@ def updateFeeds():
                 dateToPostAt = json.dumps(rruleStr)
                 db.updateSubscription(subscription, dateToPostAt, session)
 
-        db.refreshEntity(podcast)
+        db.refreshEntity(podcast, session)
 
         for episode, feedEpisode in zip(reversed(podcast.episodes), episodesFromFeed):
             if episode.xml == feedEpisode:
