@@ -58,7 +58,7 @@ def test_dateListRRule_daily_twice_a_day():
     assert real == expected
 
 
-@pytest.mark.skip(reason="known issue i need to look into it")
+# @pytest.mark.skip(reason="known issue i need to look into it")
 def test_dateListRRule_daily_twice_a_day_uneven():
     freq = 3
     amount = 2
@@ -71,6 +71,28 @@ def test_dateListRRule_daily_twice_a_day_uneven():
         datetime(2024, 5, 7),
         datetime(2024, 5, 8),
         datetime(2024, 5, 9),
+    ]
+
+    expected = [dt.isoformat() for dt in expectedDates]
+    real = dateListRRule(
+        freq=freq,
+        date=startDate,
+        interval=everyX,
+        nbEpisodes=nbEpisodes,
+        amount=amount
+    )
+    assert real == expected
+
+
+def test_dateListRRule_daily_twice_a_day_5_3():
+    freq = 3
+    amount = 3
+    nbEpisodes = 5
+    startDate = datetime(2024, 5, 5)
+    everyX = 1
+    expectedDates = [
+        datetime(2024, 5, 5),
+        datetime(2024, 5, 6),
     ]
 
     expected = [dt.isoformat() for dt in expectedDates]
