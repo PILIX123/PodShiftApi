@@ -6,3 +6,4 @@ python-dateutil
 apscheduler
 alembic
 freezegun
+pytest
