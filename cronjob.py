@@ -48,5 +48,3 @@ def updateFeeds():
                 continue
             else:
                 db.updateEpisodeContent(episode, feedEpisode, session)
-
-    db.closeSession(session)

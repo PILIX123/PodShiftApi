@@ -49,7 +49,7 @@ class Database():
 
     def getAllPodcasts(self, session: Session) -> list[Podcast]:
         r = session.exec(select(Podcast))
-        return r
+        return list(r)
 
     def addLatestEpisode(self, latestEpisodeContent: str, podcast: Podcast, session: Session):
         podcast.episodes.append(
@@ -66,9 +66,6 @@ class Database():
     def updateEpisodeContent(self, episode: Episode, episodeContent: str, session: Session):
         episode.xml = episodeContent
         session.commit()
-
-    def closeSession(self, session: Session):
-        session.close()
 
     def rollback(self, session: Session):
         session.rollback()
