@@ -122,6 +122,25 @@ def test_createNewPodcast(session):
     assert sessionPodcast.id is not None
 
 
+def test_createNewPodcast_return_entity(session):
+    db = Database()
+
+    actual = db.createNewPodcast(
+        podcastXML=TEST_PODCAST_XML,
+        podcastUrl=TEST_PODCAST_URL,
+        episodeListXML=[TEST_EPISODE_XML,
+                        TEST_EPISODE_XML2, TEST_EPISODE_XML3],
+        session=session
+    )
+
+    assert actual.xml == TEST_PODCAST_XML
+    assert actual.url == TEST_PODCAST_URL
+    assert actual.episodes[0].xml == TEST_EPISODE_XML3
+    assert actual.episodes[1].xml == TEST_EPISODE_XML2
+    assert actual.episodes[2].xml == TEST_EPISODE_XML
+    assert actual.id is not None
+
+
 def test_createCustomPodcast(session):
     podcast = Podcast(xml=TEST_PODCAST_XML, url=TEST_PODCAST_URL)
     session.add(podcast)
@@ -139,6 +158,31 @@ def test_createCustomPodcast(session):
     )
 
     actual = session.exec(select(CustomPodcast)).one()
+
+    assert actual.UUID is not None
+    assert actual.amount == TEST_CUSTOMPODCAST_AMOUNT
+    assert actual.interval == TEST_CUSTOMPODCAST_INTERVAL
+    assert actual.freq == TEST_CUSTOMPODCAST_FREQ
+    assert actual.dateToPostAt == TEST_CUSTOMPODCAST_DATE
+    assert actual.podcast.xml == TEST_PODCAST_XML
+    assert actual.podcast.url == TEST_PODCAST_URL
+
+
+def test_createCustomPodcast_return_entity(session):
+    podcast = Podcast(xml=TEST_PODCAST_XML, url=TEST_PODCAST_URL)
+    session.add(podcast)
+    session.commit()
+
+    db = Database()
+
+    actual = db.createCustomPodcast(
+        jsonDumpDate=TEST_CUSTOMPODCAST_DATE,
+        interval=TEST_CUSTOMPODCAST_INTERVAL,
+        freq=TEST_CUSTOMPODCAST_FREQ,
+        amount=TEST_CUSTOMPODCAST_AMOUNT,
+        podcast=podcast,
+        session=session
+    )
 
     assert actual.UUID is not None
     assert actual.amount == TEST_CUSTOMPODCAST_AMOUNT
