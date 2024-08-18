@@ -1,9 +1,10 @@
 from sqlmodel import Field, SQLModel, Relationship
 from typing import List, TYPE_CHECKING
 
+
 if TYPE_CHECKING:
-    from episode import Episode
-    from custompodcast import CustomPodcast
+    from episode import Episode  # pragma: no cover
+    from custompodcast import CustomPodcast  # pragma: no cover
 
 
 class BasePodacast(SQLModel):

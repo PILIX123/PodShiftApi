@@ -22,9 +22,9 @@ def updateFeeds():
         latestDbEpisode = podcast.episodes[-1]
 
         if latestEpisode == latestDbEpisode.xml:
-            continue
+            pass
         elif extractTitleFromEpisode(latestEpisode) == extractTitleFromEpisode(latestDbEpisode.xml):
-            continue
+            pass
         else:
             db.addLatestEpisode(latestEpisode, podcast, session)
             for subscription in podcast.customPodcasts:
@@ -42,7 +42,6 @@ def updateFeeds():
                 db.updateSubscription(subscription, dateToPostAt, session)
 
         db.refreshEntity(podcast, session)
-
         for episode, feedEpisode in zip(reversed(podcast.episodes), episodesFromFeed):
             if episode.xml == feedEpisode:
                 continue

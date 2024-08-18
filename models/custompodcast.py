@@ -3,7 +3,7 @@ from uuid import uuid1
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from podcast import Podcast
+    from podcast import Podcast  # pragma: no cover
 
 
 class CustomPodcastBase(SQLModel):
