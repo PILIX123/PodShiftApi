@@ -1,6 +1,5 @@
 from cronjob import updateFeeds
 from db import Database
-import json
 from unittest.mock import MagicMock
 
 
@@ -88,8 +87,8 @@ def test_updateFeeds(monkeypatch):
     monkeypatch.setattr(Database, "updateEpisodeContent",
                         updateEpisodeContentMock)
     monkeypatch.setattr(Database, "addLatestEpisode", addLatestEpisodeMock)
-    monkeypatch.setattr(json, "loads", loadsMock)
-    monkeypatch.setattr(json, "dumps", dumpsMock)
+    monkeypatch.setattr("cronjob.loads", loadsMock)
+    monkeypatch.setattr("cronjob.dumps", dumpsMock)
     monkeypatch.setattr("cronjob.get", mock_get)
     monkeypatch.setattr("cronjob.extractContents", mock_extractContent)
     monkeypatch.setattr("cronjob.extractLatestEpisode",

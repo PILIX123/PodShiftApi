@@ -1,5 +1,5 @@
 from requests import get
-import json
+from json import loads, dumps
 from dateutil.parser import parse
 from utils.xml_reader import extractContents, extractLatestEpisode, extractTitleFromEpisode
 from utils.util import dateListRRule
@@ -28,7 +28,7 @@ def updateFeeds():
         else:
             db.addLatestEpisode(latestEpisode, podcast, session)
             for subscription in podcast.customPodcasts:
-                dateToPostAt = json.loads(subscription.dateToPostAt)
+                dateToPostAt = loads(subscription.dateToPostAt)
                 startFreq = dateToPostAt[0]
 
                 rruleStr = dateListRRule(
@@ -38,7 +38,7 @@ def updateFeeds():
                     nbEpisodes=len(podcast.episodes),
                     amount=subscription.amount
                 )
-                dateToPostAt = json.dumps(rruleStr)
+                dateToPostAt = dumps(rruleStr)
                 db.updateSubscription(subscription, dateToPostAt, session)
 
         db.refreshEntity(podcast, session)
