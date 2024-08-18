@@ -1,6 +1,5 @@
 fastapi[standard]
 sqlmodel
-pyPodcastParser
 requests
 python-dateutil
 apscheduler

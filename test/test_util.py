@@ -1,6 +1,5 @@
 from utils.util import dateListRRule
 from datetime import datetime
-import pytest
 
 
 def test_dateListRRule_daily_once_a_day():

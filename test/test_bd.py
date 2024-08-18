@@ -1,5 +1,5 @@
 import pytest
-from sqlmodel import create_engine, Session, SQLModel, select, update
+from sqlmodel import create_engine, Session, SQLModel, select
 
 from models.custompodcast import CustomPodcast
 from models.podcast import Podcast
