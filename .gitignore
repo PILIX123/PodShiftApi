@@ -4,6 +4,5 @@
 /.venv
 .DS_Store
 /.pytest_cache
-pytest.ini
 .coverage
 htmlcov
