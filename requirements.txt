@@ -7,3 +7,4 @@ apscheduler
 alembic
 freezegun
 pytest
+lxml
