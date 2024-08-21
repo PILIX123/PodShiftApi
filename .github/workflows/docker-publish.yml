@@ -1,0 +1,22 @@
+name: Docker Image Publish
+
+on:
+    workflow_run:
+        workflows: ["Run Tests"]
+        branches: ["prod"]
+        types:
+            - completed
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        # needs: test
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+            - name: build image
+              run: docker build -t pilix/podshiftapi:arm64 --target prod --platform linux/arm64 .
+            - name: push
+              run: |
+                  docker login -u pilix -p ${{ secrets.DOCKER_HUB_TOKEN }}
+                  docker push pilix/podshiftapi:arm64
