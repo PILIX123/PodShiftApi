@@ -17,7 +17,7 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
             - name: build image
-              run: docker build -t pilix/podshiftapi:arm64 --target prod --platform linux/arm64 .
+              run: docker build -t pilix/podshiftapi:latest --target prod .
             - name: push
               run: |
                   docker login -u pilix -p ${{ secrets.DOCKER_HUB_TOKEN }}
