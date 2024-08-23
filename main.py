@@ -19,7 +19,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from db import get_session, Database
 from models.forminputmodel import FormInputModel
 from models.responsemodel import ResponseModel
-from utils.xml_reader import createPodcast, extractContents
+from utils.xml_reader import createPodcast, extractContents, isValidXML
 from utils.util import dateListRRule
 from cronjob import updateFeeds
 
@@ -30,7 +30,7 @@ LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s " + \
     LOGGING_CONFIG["formatters"]["access"]["fmt"]
 
 scheduler = BackgroundScheduler()
-trigger = IntervalTrigger(seconds=2, start_date=datetime.now()) if DEBUG\
+trigger = IntervalTrigger(minutes=10, start_date=datetime.now()) if DEBUG\
     else IntervalTrigger(hours=2, start_date=datetime.now())
 scheduler.add_job(updateFeeds, trigger)
 scheduler.start()
@@ -49,7 +49,17 @@ db = Database()
 
 @app.post('/PodShift')
 async def addFeed(form: FormInputModel, session: Session = Depends(get_session)):
-    podcastContent = get(form.url).content.decode()
+    try:
+        url = get(form.url)
+    except:
+        raise HTTPException(status_code=400, detail="The given URL isnt valid")
+    try:
+        podcastContent = url.content.decode()
+        isValidXML(podcastContent)
+    except:
+        raise HTTPException(status_code=400,
+                            detail="The url content wasnt an XML containing RSS")
+
     podcastXML, episodesXMLList = extractContents(podcastContent)
 
     try:

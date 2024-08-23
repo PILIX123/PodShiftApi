@@ -22,6 +22,16 @@ def createPodcast(podcastContent: str, parsedDates: list[datetime], amount: int,
     return ET.tostring(root, xml_declaration=True, encoding="unicode")
 
 
+def isValidXML(xml: str) -> None:
+    try:
+        content = ET.fromstring(xml)
+        rss = content.tag == "rss"
+        if not rss:
+            raise Exception
+    except:
+        raise
+
+
 def extractContents(podcastContent: str) -> tuple[str, list[str]]:
     root = ET.fromstring(podcastContent)
     channel = root.find("channel")
