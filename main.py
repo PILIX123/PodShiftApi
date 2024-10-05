@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 import json
+from uuid import uuid1
 
 from fastapi import FastAPI, Depends, HTTPException, Response
 from fastapi.responses import JSONResponse
@@ -19,11 +20,12 @@ from apscheduler.triggers.interval import IntervalTrigger
 from db import get_session, Database
 from models.forminputmodel import FormInputModel
 from models.responsemodel import ResponseModel
+from models.customerror import Detail
 from utils.xml_reader import createPodcast, extractContents, isValidXML
 from utils.util import dateListRRule
 from cronjob import updateFeeds
 
-DEBUG = os.getenv("DEBUG") == "True"
+DEBUG = True  # os.getenv("DEBUG") == "True"
 
 ENVIRONEMENT_URL = "localhost:8000" if DEBUG else "podshift.ddns.net:8080"
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s " + \
@@ -47,18 +49,20 @@ app = FastAPI(title="PodShiftAPI", lifespan=lifespan, docs_url=docs_url)
 db = Database()
 
 
-@app.post('/PodShift')
+@app.post('/PodShift', response_model=ResponseModel, responses={400: {"model": Detail},
+                                                                409: {"model": Detail},
+                                                                500: {"model": Detail}})
 async def addFeed(form: FormInputModel, session: Session = Depends(get_session)):
     try:
         url = get(form.url)
     except:
-        raise HTTPException(status_code=400, detail="The given URL isnt valid")
+        return JSONResponse(status_code=400, content={"detail": "The given URL isnt valid"})
     try:
         podcastContent = url.content.decode()
         isValidXML(podcastContent)
     except:
-        raise HTTPException(status_code=400,
-                            detail="The url content wasnt an XML containing RSS")
+        return JSONResponse(status_code=400,
+                            content={"detail": "The url content wasnt an XML containing RSS"})
 
     podcastXML, episodesXMLList = extractContents(podcastContent)
 
@@ -74,9 +78,9 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
         if "UNIQUE" in e.args[0]:
             podcast = db.getPodcastXML(podcastXML, session)
         else:
-            raise HTTPException(status_code=409, detail=f"{e.detail}")
+            return JSONResponse(status_code=409, content={"detail": f"{e.detail}"})
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return JSONResponse(status_code=500, content={"detail": str(e)})
 
     listDate = dateListRRule(
         freq=form.recurrence,
@@ -86,20 +90,26 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
         amount=form.amountOfEpisode
     )
     jsonDumps = json.dumps(listDate)
+    uuid = str(uuid1())
     customPodcast = db.createCustomPodcast(
         jsonDumpDate=jsonDumps,
         interval=form.everyX,
         freq=form.recurrence,
         podcast=podcast,
         amount=form.amountOfEpisode,
+        uuid=uuid,
         session=session
     )
     return JSONResponse(content=jsonable_encoder(ResponseModel(url=f"http://{ENVIRONEMENT_URL}/PodShift/{customPodcast.UUID}")))
 
 
-@app.get("/PodShift/{customPodcastGUID}")
+@app.get("/PodShift/{customPodcastGUID}", response_class=Response, responses={200: {"content": {"application/xml": {}}},
+                                                                              404: {"model": Detail}})
 async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_session)):
     customFeed = db.getCustomPodcast(customPodcastGUID, session)
+
+    if customFeed is None:
+        return JSONResponse(status_code=404, content={"detail": "No podcast found"})
 
     content = createPodcast(
         podcastContent=customFeed.podcast.xml,

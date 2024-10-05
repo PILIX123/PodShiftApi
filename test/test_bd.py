@@ -21,6 +21,7 @@ TEST_CUSTOMPODCAST_FREQ = 1
 TEST_CUSTOMPODCAST_INTERVAL = 2
 TEST_CUSTOMPODCAST_AMOUNT = 3
 TEST_LATEST_PODCAST_XML = "TEST_LATEST_PODCAST_XML"
+TEST_UUID = "TEST_UUID"
 
 
 @pytest.fixture(scope="function")
@@ -154,12 +155,13 @@ def test_createCustomPodcast(session):
         freq=TEST_CUSTOMPODCAST_FREQ,
         amount=TEST_CUSTOMPODCAST_AMOUNT,
         podcast=podcast,
+        uuid=TEST_UUID,
         session=session
     )
 
     actual = session.exec(select(CustomPodcast)).one()
 
-    assert actual.UUID is not None
+    assert actual.UUID == TEST_UUID
     assert actual.amount == TEST_CUSTOMPODCAST_AMOUNT
     assert actual.interval == TEST_CUSTOMPODCAST_INTERVAL
     assert actual.freq == TEST_CUSTOMPODCAST_FREQ
@@ -181,10 +183,11 @@ def test_createCustomPodcast_return_entity(session):
         freq=TEST_CUSTOMPODCAST_FREQ,
         amount=TEST_CUSTOMPODCAST_AMOUNT,
         podcast=podcast,
+        uuid=TEST_UUID,
         session=session
     )
 
-    assert actual.UUID is not None
+    assert actual.UUID == TEST_UUID
     assert actual.amount == TEST_CUSTOMPODCAST_AMOUNT
     assert actual.interval == TEST_CUSTOMPODCAST_INTERVAL
     assert actual.freq == TEST_CUSTOMPODCAST_FREQ
