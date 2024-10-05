@@ -19,6 +19,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from db import get_session, Database
 from models.forminputmodel import FormInputModel
 from models.responsemodel import ResponseModel
+from models.customerror import Detail
 from utils.xml_reader import createPodcast, extractContents, isValidXML
 from utils.util import dateListRRule
 from cronjob import updateFeeds
@@ -47,7 +48,9 @@ app = FastAPI(title="PodShiftAPI", lifespan=lifespan, docs_url=docs_url)
 db = Database()
 
 
-@app.post('/PodShift')
+@app.post('/PodShift', response_model=ResponseModel, responses={400: {"model": Detail},
+                                                                409: {"model": Detail},
+                                                                500: {"model": Detail}})
 async def addFeed(form: FormInputModel, session: Session = Depends(get_session)):
     try:
         url = get(form.url)
@@ -57,8 +60,8 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
         podcastContent = url.content.decode()
         isValidXML(podcastContent)
     except:
-        raise HTTPException(status_code=400,
-                            detail="The url content wasnt an XML containing RSS")
+        raise JSONResponse(status_code=400,
+                           detail="The url content wasnt an XML containing RSS")
 
     podcastXML, episodesXMLList = extractContents(podcastContent)
 
@@ -74,9 +77,9 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
         if "UNIQUE" in e.args[0]:
             podcast = db.getPodcastXML(podcastXML, session)
         else:
-            raise HTTPException(status_code=409, detail=f"{e.detail}")
+            raise JSONResponse(status_code=409, detail=f"{e.detail}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise JSONResponse(status_code=500, detail=str(e))
 
     listDate = dateListRRule(
         freq=form.recurrence,
