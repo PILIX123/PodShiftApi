@@ -55,7 +55,7 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
     try:
         url = get(form.url)
     except:
-        raise HTTPException(status_code=400, detail="The given URL isnt valid")
+        raise JSONResponse(status_code=400, detail="The given URL isnt valid")
     try:
         podcastContent = url.content.decode()
         isValidXML(podcastContent)
