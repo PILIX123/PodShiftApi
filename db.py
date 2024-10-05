@@ -33,13 +33,14 @@ class Database():
         session.refresh(podcast)
         return podcast
 
-    def createCustomPodcast(self, jsonDumpDate: str, interval: int, freq: int, podcast: Podcast, amount: int, session: Session) -> CustomPodcast:
+    def createCustomPodcast(self, jsonDumpDate: str, interval: int, freq: int, podcast: Podcast, amount: int, uuid: str, session: Session) -> CustomPodcast:
         customPodcast = CustomPodcast(
             dateToPostAt=jsonDumpDate,
             interval=interval,
             freq=freq,
             podcast=podcast,
-            amount=amount
+            amount=amount,
+            UUID=uuid
         )
         session.add(customPodcast)
         session.commit()

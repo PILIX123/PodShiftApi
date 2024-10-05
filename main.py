@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 import json
+from uuid import uuid1
 
 from fastapi import FastAPI, Depends, HTTPException, Response
 from fastapi.responses import JSONResponse
@@ -89,12 +90,14 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
         amount=form.amountOfEpisode
     )
     jsonDumps = json.dumps(listDate)
+    uuid = str(uuid1())
     customPodcast = db.createCustomPodcast(
         jsonDumpDate=jsonDumps,
         interval=form.everyX,
         freq=form.recurrence,
         podcast=podcast,
         amount=form.amountOfEpisode,
+        uuid=uuid,
         session=session
     )
     return JSONResponse(content=jsonable_encoder(ResponseModel(url=f"http://{ENVIRONEMENT_URL}/PodShift/{customPodcast.UUID}")))
