@@ -20,6 +20,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from db import get_session, Database
 from models.forminputmodel import FormInputModel
 from models.responsemodel import ResponseModel
+from models.updatemodel import FormUpdateModel
 from models.customerror import Detail
 from utils.xml_reader import createPodcast, extractContents, isValidXML
 from utils.util import dateListRRule
@@ -119,3 +120,8 @@ async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_sessio
     )
 
     return Response(content=content, media_type="application/xml")
+
+
+@app.put("/PodShift/{customPodcastGUID}")
+async def updateCustomFeed(customPodcastGUID, updateModel: FormUpdateModel, session: Session = Depends(get_session)):
+    pass
