@@ -128,8 +128,22 @@ async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_sessio
                                                      500: {"model": Detail}})
 async def updateCustomFeed(customPodcastGUID, updateModel: FormUpdateModel, session: Session = Depends(get_session)):
     try:
+        customFeed = db.getCustomPodcast(customPodcastGUID, session)
+
+        newDates = dateListRRule(updateModel.recurrence,
+                                 datetime.date(datetime.now()),
+                                 updateModel.everyX,
+                                 len(customFeed.podcast.episodes) -
+                                 updateModel.currentEpisode,
+                                 updateModel.amountOfEpisode
+                                 )
+
         db.updateCustomPodcast(customPodcastGUID=customPodcastGUID,
-                               freq=updateModel.recurrence, interval=updateModel.everyX, amount=updateModel.amountOfEpisode)
+                               freq=updateModel.recurrence,
+                               interval=updateModel.everyX,
+                               amount=updateModel.amountOfEpisode,
+                               dateToPostAt=newDates,
+                               session=session)
     except (NoPodcastException):
         return JSONResponse(status_code=404, content={"detail": "The requested podcast was not found"})
     except Exception as e:
