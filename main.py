@@ -22,11 +22,12 @@ from models.forminputmodel import FormInputModel
 from models.responsemodel import ResponseModel
 from models.updatemodel import FormUpdateModel
 from models.customerror import Detail
+from custom_exceptions.no_podcast import NoPodcastException
 from utils.xml_reader import createPodcast, extractContents, isValidXML
 from utils.util import dateListRRule
 from cronjob import updateFeeds
 
-DEBUG = os.getenv("DEBUG") == "True"
+DEBUG = True  # os.getenv("DEBUG") == "True"
 
 ENVIRONEMENT_URL = "localhost:8000" if DEBUG else "podshift.ddns.net:8080"
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s " + \
@@ -122,6 +123,14 @@ async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_sessio
     return Response(content=content, media_type="application/xml")
 
 
-@app.put("/PodShift/{customPodcastGUID}")
+@app.put("/PodShift/{customPodcastGUID}", responses={200: {"content": {"application/xml": {}}},
+                                                     404: {"model": Detail},
+                                                     500: {"model": Detail}})
 async def updateCustomFeed(customPodcastGUID, updateModel: FormUpdateModel, session: Session = Depends(get_session)):
-    pass
+    try:
+        db.updateCustomPodcast(customPodcastGUID=customPodcastGUID,
+                               freq=updateModel.recurrence, interval=updateModel.everyX, amount=updateModel.amountOfEpisode)
+    except (NoPodcastException):
+        return JSONResponse(status_code=404, content={"detail": "The requested podcast was not found"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"detail": str(e)})

@@ -3,6 +3,7 @@ from sqlmodel import create_engine, Session, select
 from models.custompodcast import CustomPodcast
 from models.podcast import Podcast
 from models.episode import Episode
+from custom_exceptions.no_podcast import NoPodcastException
 
 DATABASE_URL = "sqlite:///data/db.sqlite"
 
@@ -51,6 +52,11 @@ class Database():
     def getAllPodcasts(self, session: Session) -> list[Podcast]:
         r = session.exec(select(Podcast))
         return list(r)
+
+    def updateCustomPodcast(self, podcastUUID: str, freq: int, interval: int, amount: int, dateToPostAt: str, session: Session):
+        customPodcast = session.get(CustomPodcast, podcastUUID)
+        if (customPodcast is None):
+            raise NoPodcastException(message="No podcast found")
 
     def addLatestEpisode(self, latestEpisodeContent: str, podcast: Podcast, session: Session):
         podcast.episodes.append(
