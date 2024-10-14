@@ -1,6 +1,6 @@
 from sqlmodel import create_engine, Session, select
 
-from models.custompodcast import CustomPodcast
+from models.custompodcast import CustomPodcast, CustomPodcastUpdate
 from models.podcast import Podcast
 from models.episode import Episode
 from custom_exceptions.no_podcast import NoPodcastException
@@ -53,10 +53,16 @@ class Database():
         r = session.exec(select(Podcast))
         return list(r)
 
-    def updateCustomPodcast(self, podcastUUID: str, freq: int, interval: int, amount: int, dateToPostAt: str, session: Session):
+    def updateCustomPodcast(self, podcastUUID: str, updateCustomPodcast: CustomPodcastUpdate, session: Session):
         customPodcast = session.get(CustomPodcast, podcastUUID)
         if (customPodcast is None):
             raise NoPodcastException(message="No podcast found")
+        podcastData = updateCustomPodcast.model_dump(exclude_unset=True)
+        customPodcast.sqlmodel_update(podcastData)
+        session.add(customPodcast)
+        session.commit()
+        session.refresh(customPodcast)
+        return customPodcast
 
     def addLatestEpisode(self, latestEpisodeContent: str, podcast: Podcast, session: Session):
         podcast.episodes.append(
