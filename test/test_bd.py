@@ -286,6 +286,17 @@ def test_updateEpisodeContent(session, createDB):
     assert actual.xml == TEST_EPISODE_XML2
 
 
+def test_updateCustomPodcast(session, createDB):
+    _, _, _, customPodcast = createDB
+    db = Database()
+
+    db.updateCustomPodcast(customPodcast.UUID, TEST_EPISODE_XML2, session)
+
+    actual = session.get(Episode, episode.id)
+
+    assert actual.xml == TEST_EPISODE_XML2
+
+
 def test_rollback(session, createDB):
     podcast, _, _, _ = createDB
 
