@@ -138,14 +138,16 @@ async def updateCustomFeed(customPodcastGUID, updateModel: FormUpdateModel, sess
                                  updateModel.currentEpisode,
                                  updateModel.amountOfEpisode
                                  )
+
         podcastToUpdate = CustomPodcastUpdate(
-            dateToPostAt=newDates,
+            podcast_id=customFeed.podcast_id,
+            dateToPostAt=json.dumps(newDates),
             amount=updateModel.amountOfEpisode,
             freq=updateModel.recurrence,
             interval=updateModel.everyX
         )
 
-        customPodcast = db.updateCustomPodcast(customPodcastGUID=customPodcastGUID,
+        customPodcast = db.updateCustomPodcast(podcastUUID=customPodcastGUID,
                                                updateCustomPodcast=podcastToUpdate,
                                                session=session)
 
