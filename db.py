@@ -56,7 +56,7 @@ class Database():
     def updateCustomPodcast(self, podcastUUID: str, updateCustomPodcast: CustomPodcastUpdate, session: Session):
         customPodcast = session.get(CustomPodcast, podcastUUID)
         if (customPodcast is None):
-            raise NoPodcastException(message="No podcast found")
+            raise NoPodcastException()
         podcastData = updateCustomPodcast.model_dump(exclude_unset=True)
         customPodcast.sqlmodel_update(podcastData)
         session.add(customPodcast)
