@@ -64,9 +64,20 @@ class Database():
         session.refresh(customPodcast)
         return customPodcast
 
+    def deleteCustomPodcast(self, podcastUUID: str, session: Session):
+        customPodcast = session.get(CustomPodcast, podcastUUID)
+        if customPodcast is None:
+            raise NoPodcastException()
+        session.delete(customPodcast)
+        session.commit()
+
     def addLatestEpisode(self, latestEpisodeContent: str, podcast: Podcast, session: Session):
         podcast.episodes.append(
             Episode(xml=latestEpisodeContent, podcast=podcast))
+        session.commit()
+
+    def updateEpisodeContent(self, episode: Episode, episodeContent: str, session: Session):
+        episode.xml = episodeContent
         session.commit()
 
     def updateSubscription(self, subscription: CustomPodcast, dateToPostAt: str, session: Session):
@@ -75,10 +86,6 @@ class Database():
 
     def refreshEntity(self, entity: Podcast | Episode | CustomPodcast, session: Session):
         session.refresh(entity)
-
-    def updateEpisodeContent(self, episode: Episode, episodeContent: str, session: Session):
-        episode.xml = episodeContent
-        session.commit()
 
     def rollback(self, session: Session):
         session.rollback()

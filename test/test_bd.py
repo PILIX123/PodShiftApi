@@ -324,6 +324,24 @@ def test_updateCustomPodcast_NoPodcast(session):
         db.updateCustomPodcast(1, newPodcast, session)
 
 
+def test_deleteCustomPodcast(session, createDB):
+    _, _, _, _ = createDB
+    db = Database()
+
+    db.deleteCustomPodcast(TEST_CUSTOMPODCAST_UUID, session)
+
+    actual = session.get(CustomPodcast, TEST_CUSTOMPODCAST_UUID)
+
+    assert actual is None
+
+
+def test_deleteCustomPodcast_NoPodcast(session):
+    with pytest.raises(NoPodcastException):
+        db = Database()
+
+        db.deleteCustomPodcast(TEST_CUSTOMPODCAST_UUID, session)
+
+
 def test_rollback(session, createDB):
     podcast, _, _, _ = createDB
 

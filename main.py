@@ -161,3 +161,15 @@ async def updateCustomFeed(customPodcastGUID, updateModel: FormUpdateModel, sess
         return JSONResponse(status_code=404, content={"detail": "The requested podcast was not found"})
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": str(e)})
+
+
+@app.delete("/PodShift/{customPodcastGUID}", responses={200: {},
+                                                        404: {"model": Detail},
+                                                        500: {"model": Detail}})
+async def deleteCustomPodcast(customPodcastGUID: str, session: Session = Depends(get_session)):
+    try:
+        db.deleteCustomPodcast(customPodcastGUID, session=session)
+    except (NoPodcastException):
+        return JSONResponse(status_code=404, content={"detail": "The requested podcast was not found"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"detail": str(e)})
