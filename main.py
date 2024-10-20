@@ -28,7 +28,7 @@ from utils.xml_reader import createPodcast, extractContents, isValidXML
 from utils.util import dateListRRule
 from cronjob import updateFeeds
 
-DEBUG = True  # os.getenv("DEBUG") == "True"
+DEBUG = os.getenv("DEBUG") == "True"
 
 ENVIRONEMENT_URL = "localhost:8000" if DEBUG else "podshift.net:8080"
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s " + \
