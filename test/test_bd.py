@@ -1,9 +1,10 @@
 import pytest
 from sqlmodel import create_engine, Session, SQLModel, select
 
-from models.custompodcast import CustomPodcast
+from models.custompodcast import CustomPodcast, CustomPodcastUpdate
 from models.podcast import Podcast
 from models.episode import Episode
+from custom_exceptions.no_podcast import NoPodcastException
 
 from db import Database
 
@@ -17,6 +18,7 @@ TEST_EPISODE_XML3 = "TEST_EPISODE_XML3"
 TEST_CUSTOMPODCAST_UUID = "TEST_CUSTOMPODCAST_UUID"
 TEST_CUSTOMPODCAST_DATE = "TEST_CUSTOMPODCAST_DATE"
 TEST_CUSTOMPODCAST_UPDATE_DATE = "TEST_CUSTOMPODCAST_UPDATE_DATE"
+TEST_CUSTOMPODCAST_UPDATE_DATE2 = "TEST_CUSTOMPODCAST_UPDATE_DATE2"
 TEST_CUSTOMPODCAST_FREQ = 1
 TEST_CUSTOMPODCAST_INTERVAL = 2
 TEST_CUSTOMPODCAST_AMOUNT = 3
@@ -284,6 +286,42 @@ def test_updateEpisodeContent(session, createDB):
     actual = session.get(Episode, episode.id)
 
     assert actual.xml == TEST_EPISODE_XML2
+
+
+def test_updateCustomPodcast(session, createDB):
+    _, _, _, customPodcast = createDB
+    db = Database()
+
+    customPodcast.podcast_id
+    newPodcast = CustomPodcastUpdate(
+        podcast_id=customPodcast.podcast_id,
+        amount=8,
+        freq=6,
+        interval=9,
+        dateToPostAt=TEST_CUSTOMPODCAST_UPDATE_DATE2)
+
+    db.updateCustomPodcast(customPodcast.UUID, newPodcast, session)
+
+    actual = session.get(CustomPodcast, customPodcast.UUID)
+
+    assert actual.dateToPostAt == TEST_CUSTOMPODCAST_UPDATE_DATE2
+    assert actual.interval == 9
+    assert actual.freq == 6
+    assert actual.amount == 8
+
+
+def test_updateCustomPodcast_NoPodcast(session):
+    with pytest.raises(NoPodcastException):
+        db = Database()
+
+        newPodcast = CustomPodcastUpdate(
+            podcast_id=1,
+            amount=8,
+            freq=6,
+            interval=9,
+            dateToPostAt=TEST_CUSTOMPODCAST_UPDATE_DATE2)
+
+        db.updateCustomPodcast(1, newPodcast, session)
 
 
 def test_rollback(session, createDB):

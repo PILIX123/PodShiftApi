@@ -3,7 +3,7 @@ from datetime import datetime
 import json
 from uuid import uuid1
 
-from fastapi import FastAPI, Depends, HTTPException, Response
+from fastapi import FastAPI, Depends, Response
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from uvicorn.config import LOGGING_CONFIG
@@ -19,15 +19,18 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from db import get_session, Database
 from models.forminputmodel import FormInputModel
-from models.responsemodel import ResponseModel
+from models.responsemodel import ResponseModel, PodcastResponseModel
+from models.updatemodel import FormUpdateModel
 from models.customerror import Detail
+from models.custompodcast import CustomPodcastUpdate
+from custom_exceptions.no_podcast import NoPodcastException
 from utils.xml_reader import createPodcast, extractContents, isValidXML
 from utils.util import dateListRRule
 from cronjob import updateFeeds
 
 DEBUG = os.getenv("DEBUG") == "True"
 
-ENVIRONEMENT_URL = "localhost:8000" if DEBUG else "podshift.ddns.net:8080"
+ENVIRONEMENT_URL = "localhost:8000" if DEBUG else "podshift.net:8080"
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s " + \
     LOGGING_CONFIG["formatters"]["access"]["fmt"]
 
@@ -119,3 +122,42 @@ async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_sessio
     )
 
     return Response(content=content, media_type="application/xml")
+
+
+@app.put("/PodShift/{customPodcastGUID}", response_model=PodcastResponseModel, responses={200: {"content": {"application/xml": {}}},
+                                                                                          404: {"model": Detail},
+                                                                                          500: {"model": Detail}})
+async def updateCustomFeed(customPodcastGUID, updateModel: FormUpdateModel, session: Session = Depends(get_session)):
+    try:
+        customFeed = db.getCustomPodcast(customPodcastGUID, session)
+
+        newDates = dateListRRule(updateModel.recurrence,
+                                 datetime.date(datetime.now()),
+                                 updateModel.everyX,
+                                 len(customFeed.podcast.episodes) -
+                                 updateModel.currentEpisode,
+                                 updateModel.amountOfEpisode
+                                 )
+
+        podcastToUpdate = CustomPodcastUpdate(
+            podcast_id=customFeed.podcast_id,
+            dateToPostAt=json.dumps(newDates),
+            amount=updateModel.amountOfEpisode,
+            freq=updateModel.recurrence,
+            interval=updateModel.everyX
+        )
+
+        customPodcast = db.updateCustomPodcast(podcastUUID=customPodcastGUID,
+                                               updateCustomPodcast=podcastToUpdate,
+                                               session=session)
+
+        response = PodcastResponseModel(UUID=customPodcast.UUID,
+                                        freq=customPodcast.freq,
+                                        interval=customPodcast.interval,
+                                        amount=customPodcast.amount
+                                        )
+        return JSONResponse(content=jsonable_encoder(response))
+    except (NoPodcastException):
+        return JSONResponse(status_code=404, content={"detail": "The requested podcast was not found"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"detail": str(e)})

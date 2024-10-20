@@ -13,6 +13,14 @@ class CustomPodcastBase(SQLModel):
     amount: int = Field(default=1)
 
 
+class CustomPodcastUpdate(SQLModel):
+    dateToPostAt: str
+    podcast_id: int | None
+    freq: int | None
+    interval: int | None
+    amount: int | None
+
+
 class CustomPodcast(CustomPodcastBase, table=True):
     UUID: str = Field(default=None, primary_key=True)
     podcast: "Podcast" = Relationship(back_populates="customPodcasts")
