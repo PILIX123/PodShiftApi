@@ -130,13 +130,16 @@ async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_sessio
 async def updateCustomFeed(customPodcastGUID, updateModel: FormUpdateModel, session: Session = Depends(get_session)):
     try:
         customFeed = db.getCustomPodcast(customPodcastGUID, session)
+        
+        if customFeed is None:
+            raise NoPodcastException
 
-        newDates = dateListRRule(updateModel.recurrence,
-                                 datetime.date(datetime.now()),
-                                 updateModel.everyX,
-                                 len(customFeed.podcast.episodes) -
+        newDates = dateListRRule(freq=updateModel.recurrence,
+                                 date=datetime.date(datetime.now()),
+                                 interval=updateModel.everyX,
+                                 nbEpisodes=len(customFeed.podcast.episodes) -
                                  updateModel.currentEpisode,
-                                 updateModel.amountOfEpisode
+                                 amount=updateModel.amountOfEpisode
                                  )
 
         podcastToUpdate = CustomPodcastUpdate(
