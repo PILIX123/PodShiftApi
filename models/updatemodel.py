@@ -6,4 +6,4 @@ class FormUpdateModel(BaseModel):
     currentEpisode: int
     amountOfEpisode: int
     recurrence: ReccurenceEnum
-    everyX: int 
+    everyX: int

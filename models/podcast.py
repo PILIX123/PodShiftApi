@@ -15,5 +15,4 @@ class BasePodacast(SQLModel):
 class Podcast(BasePodacast, table=True):
     id: int = Field(default=None, primary_key=True)
     episodes: List["Episode"] = Relationship(back_populates="podcast")
-    customPodcasts: List["CustomPodcast"] = Relationship(
-        back_populates="podcast")
+    customPodcasts: List["CustomPodcast"] = Relationship(back_populates="podcast")

@@ -29,8 +29,7 @@ TEST_UUID = "TEST_UUID"
 @pytest.fixture(scope="function")
 def session():
     DATABASE_URL = "sqlite:///:memory:"
-    engine = create_engine(DATABASE_URL, connect_args={
-        "check_same_thread": False})
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
     SQLModel.metadata.create_all(bind=engine)
 
     with Session(engine) as session:
@@ -62,7 +61,7 @@ def createDB(session):
         dateToPostAt=TEST_CUSTOMPODCAST_DATE,
         freq=TEST_CUSTOMPODCAST_FREQ,
         interval=TEST_CUSTOMPODCAST_INTERVAL,
-        amount=TEST_CUSTOMPODCAST_AMOUNT
+        amount=TEST_CUSTOMPODCAST_AMOUNT,
     )
     session.add(customPodcast)
     session.commit()
@@ -111,9 +110,8 @@ def test_createNewPodcast(session):
     db.createNewPodcast(
         podcastXML=TEST_PODCAST_XML,
         podcastUrl=TEST_PODCAST_URL,
-        episodeListXML=[TEST_EPISODE_XML,
-                        TEST_EPISODE_XML2, TEST_EPISODE_XML3],
-        session=session
+        episodeListXML=[TEST_EPISODE_XML, TEST_EPISODE_XML2, TEST_EPISODE_XML3],
+        session=session,
     )
 
     sessionPodcast = session.get(Podcast, 1)
@@ -131,9 +129,8 @@ def test_createNewPodcast_return_entity(session):
     actual = db.createNewPodcast(
         podcastXML=TEST_PODCAST_XML,
         podcastUrl=TEST_PODCAST_URL,
-        episodeListXML=[TEST_EPISODE_XML,
-                        TEST_EPISODE_XML2, TEST_EPISODE_XML3],
-        session=session
+        episodeListXML=[TEST_EPISODE_XML, TEST_EPISODE_XML2, TEST_EPISODE_XML3],
+        session=session,
     )
 
     assert actual.xml == TEST_PODCAST_XML
@@ -158,7 +155,7 @@ def test_createCustomPodcast(session):
         amount=TEST_CUSTOMPODCAST_AMOUNT,
         podcast=podcast,
         uuid=TEST_UUID,
-        session=session
+        session=session,
     )
 
     actual = session.exec(select(CustomPodcast)).one()
@@ -186,7 +183,7 @@ def test_createCustomPodcast_return_entity(session):
         amount=TEST_CUSTOMPODCAST_AMOUNT,
         podcast=podcast,
         uuid=TEST_UUID,
-        session=session
+        session=session,
     )
 
     assert actual.UUID == TEST_UUID
@@ -221,9 +218,7 @@ def test_addLatestEpisode(session, createDB):
     db = Database()
 
     db.addLatestEpisode(
-        latestEpisodeContent=TEST_LATEST_PODCAST_XML,
-        podcast=podcast,
-        session=session
+        latestEpisodeContent=TEST_LATEST_PODCAST_XML, podcast=podcast, session=session
     )
 
     episodes = session.exec(select(Episode)).all()
@@ -236,11 +231,7 @@ def test_updateSubscription(session, createDB):
 
     db = Database()
 
-    db.updateSubscription(
-        customPodcast,
-        TEST_CUSTOMPODCAST_DATE,
-        session
-    )
+    db.updateSubscription(customPodcast, TEST_CUSTOMPODCAST_DATE, session)
 
     actual = session.exec(select(CustomPodcast)).one()
 
@@ -249,23 +240,18 @@ def test_updateSubscription(session, createDB):
 
 def test_refreshEntity():
     DATABASE_URL = "sqlite:///:memory:"
-    engine = create_engine(DATABASE_URL, connect_args={
-        "check_same_thread": False})
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
     SQLModel.metadata.create_all(bind=engine)
 
     with Session(engine) as session:
-        podcast = Podcast(
-            xml=TEST_PODCAST_XML,
-            url=TEST_PODCAST_URL
-        )
+        podcast = Podcast(xml=TEST_PODCAST_XML, url=TEST_PODCAST_URL)
         session.add(podcast)
         session.commit()
 
         podcast_id = podcast.id
 
         with Session(engine) as session2:
-            p = session2.exec(select(Podcast).where(
-                Podcast.id == podcast_id)).one()
+            p = session2.exec(select(Podcast).where(Podcast.id == podcast_id)).one()
 
             p.xml = TEST_PODCAST_XML2
             session2.add(p)
@@ -298,7 +284,8 @@ def test_updateCustomPodcast(session, createDB):
         amount=8,
         freq=6,
         interval=9,
-        dateToPostAt=TEST_CUSTOMPODCAST_UPDATE_DATE2)
+        dateToPostAt=TEST_CUSTOMPODCAST_UPDATE_DATE2,
+    )
 
     db.updateCustomPodcast(customPodcast.UUID, newPodcast, session)
 
@@ -319,7 +306,8 @@ def test_updateCustomPodcast_NoPodcast(session):
             amount=8,
             freq=6,
             interval=9,
-            dateToPostAt=TEST_CUSTOMPODCAST_UPDATE_DATE2)
+            dateToPostAt=TEST_CUSTOMPODCAST_UPDATE_DATE2,
+        )
 
         db.updateCustomPodcast(1, newPodcast, session)
 
