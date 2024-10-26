@@ -8,10 +8,11 @@ from pathlib import Path
 from models.podcast import Podcast
 from models.custompodcast import CustomPodcast
 from models.episode import Episode
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-DB_PATH = str((Path().parent/"data"/"db.sqlite").resolve())
+DB_PATH = str((Path().parent / "data" / "db.sqlite").resolve())
 config.set_main_option("sqlalchemy.url", f"sqlite:///{DB_PATH}")
 
 # Interpret the config file for Python logging.
@@ -69,9 +70,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

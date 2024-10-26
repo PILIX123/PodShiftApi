@@ -4,9 +4,9 @@ from dateutil.rrule import WEEKLY, DAILY, MONTHLY, YEARLY
 
 
 class ReccurenceEnum(IntEnum):
-    WEEKLY = WEEKLY,  # 2
-    DAILY = DAILY,  # 3
-    MONTHLY = MONTHLY,  # 1
+    WEEKLY = (WEEKLY,)  # 2
+    DAILY = (DAILY,)  # 3
+    MONTHLY = (MONTHLY,)  # 1
     YEARLY = YEARLY  # 0
 
 

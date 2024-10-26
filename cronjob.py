@@ -1,7 +1,11 @@
 from requests import get
 from json import loads, dumps
 from dateutil.parser import parse
-from utils.xml_reader import extractContents, extractLatestEpisode, extractTitleFromEpisode
+from utils.xml_reader import (
+    extractContents,
+    extractLatestEpisode,
+    extractTitleFromEpisode,
+)
 from utils.util import dateListRRule
 from db import Database, get_session
 
@@ -23,7 +27,9 @@ def updateFeeds():
 
         if latestEpisode == latestDbEpisode.xml:
             pass
-        elif extractTitleFromEpisode(latestEpisode) == extractTitleFromEpisode(latestDbEpisode.xml):
+        elif extractTitleFromEpisode(latestEpisode) == extractTitleFromEpisode(
+            latestDbEpisode.xml
+        ):
             pass
         else:
             db.addLatestEpisode(latestEpisode, podcast, session)
@@ -36,7 +42,7 @@ def updateFeeds():
                     date=parse(startFreq),
                     interval=subscription.interval,
                     nbEpisodes=len(podcast.episodes),
-                    amount=subscription.amount
+                    amount=subscription.amount,
                 )
                 dateToPostAt = dumps(rruleStr)
                 db.updateSubscription(subscription, dateToPostAt, session)
