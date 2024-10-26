@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 import json
+from re import DEBUG
 from uuid import uuid1
 
 from fastapi import FastAPI, Depends, Response
@@ -28,8 +29,8 @@ from utils.xml_reader import createPodcast, extractContents, isValidXML
 from utils.util import dateListRRule
 from cronjob import updateFeeds
 
+os.environ["DEBUG"] = "True"
 DEBUG = os.getenv("DEBUG") == "True"
-
 ENVIRONEMENT_URL = "localhost:8000" if DEBUG else "podshift.net:8080"
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = (
     "%(asctime)s " + LOGGING_CONFIG["formatters"]["access"]["fmt"]
@@ -235,3 +236,4 @@ async def GetCustomPodcastContent(
         interval=customPodcast.interval,
         amount=customPodcast.amount,
     )
+    return JSONResponse(content=jsonable_encoder(response))
