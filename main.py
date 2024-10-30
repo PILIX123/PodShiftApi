@@ -60,7 +60,8 @@ db = Database()
 @app.post(
     "/PodShift",
     response_model=ResponseModel,
-    responses={400: {"model": Detail}, 409: {"model": Detail}, 500: {"model": Detail}},
+    responses={400: {"model": Detail}, 409: {
+        "model": Detail}, 500: {"model": Detail}},
 )
 async def addFeed(form: FormInputModel, session: Session = Depends(get_session)):
     try:
@@ -126,7 +127,8 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
 @app.get(
     "/PodShift/{customPodcastGUID}",
     response_class=Response,
-    responses={200: {"content": {"application/xml": {}}}, 404: {"model": Detail}},
+    responses={200: {"content": {"application/xml": {}}},
+               404: {"model": Detail}},
 )
 async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_session)):
     customFeed = db.getCustomPodcast(customPodcastGUID, session)
@@ -168,7 +170,8 @@ async def updateCustomFeed(
             freq=updateModel.recurrence,
             date=datetime.date(datetime.now()),
             interval=updateModel.everyX,
-            nbEpisodes=len(customFeed.podcast.episodes) - updateModel.currentEpisode,
+            nbEpisodes=len(customFeed.podcast.episodes) -
+            updateModel.currentEpisode,
             amount=updateModel.amountOfEpisode,
         )
 
@@ -219,13 +222,14 @@ async def deleteCustomPodcast(
 
 
 @app.get(
-    "/PodShift/{pocastUUID}/content",
+    "/PodShift/{customPodcastGUID}/content",
     responses={200: {}, 404: {"model": Detail}, 500: {"model": Detail}},
 )
 async def GetCustomPodcastContent(
-    podcastUUID: str, session: Session = Depends(get_session)
+    customPodcastGUID: str, session: Session = Depends(get_session)
 ):
-    customPodcast = db.getCustomPodcast(customPodcastGUID=podcastUUID, session=session)
+    customPodcast = db.getCustomPodcast(
+        customPodcastGUID=customPodcastGUID, session=session)
     if customPodcast is None:
         return JSONResponse(
             status_code=404, content={"detail": "The requested podcast was not found"}
