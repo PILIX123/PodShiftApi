@@ -13,7 +13,7 @@
         },
         {
             "name": "Python Debugger: FastAPI",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
             "args": ["main:app", "--reload"],
