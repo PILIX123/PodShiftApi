@@ -12,6 +12,7 @@ COPY ./alembic.ini .
 COPY ./entrypoint.sh .
 COPY ./utils ./utils
 COPY ./cronjob.py .
+COPY ./custom_exceptions ./custom_exceptions
 RUN chmod +x /app/entrypoint.sh
 ENTRYPOINT ["/app/entrypoint.sh"]
 
