@@ -6,6 +6,7 @@ from uuid import uuid1
 from fastapi import FastAPI, Depends, Response
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
+from fastapi.middleware.cors import CORSMiddleware
 from uvicorn.config import LOGGING_CONFIG
 from requests import get
 from dateutil.parser import parse
@@ -54,6 +55,14 @@ async def lifespan(app: FastAPI):
 docs_url = "/docs" if DEBUG else None
 app = FastAPI(title="PodShiftAPI", lifespan=lifespan, docs_url=docs_url)
 db = Database()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins={"*"},
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.post(
