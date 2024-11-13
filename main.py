@@ -1,7 +1,6 @@
 import os
 from datetime import datetime
 import json
-from re import DEBUG
 from uuid import uuid1
 
 from fastapi import FastAPI, Depends, Response
