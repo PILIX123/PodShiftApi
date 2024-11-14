@@ -13,6 +13,8 @@ jobs:
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
+              with:
+                  ref: "prod"
             - name: Set up QEMU for ARM64
               run: |
                   sudo apt-get update

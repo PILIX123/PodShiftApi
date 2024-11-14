@@ -3,7 +3,7 @@ from datetime import datetime
 import json
 from uuid import uuid1
 
-from fastapi import FastAPI, Depends, HTTPException, Response
+from fastapi import FastAPI, Depends, Response
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,21 +20,28 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from db import get_session, Database
 from models.forminputmodel import FormInputModel
-from models.responsemodel import ResponseModel
+from models.responsemodel import ResponseModel, PodcastResponseModel
+from models.updatemodel import FormUpdateModel
 from models.customerror import Detail
+from models.custompodcast import CustomPodcastUpdate
+from custom_exceptions.no_podcast import NoPodcastException
 from utils.xml_reader import createPodcast, extractContents, isValidXML
 from utils.util import dateListRRule
 from cronjob import updateFeeds
 
-DEBUG = os.getenv("DEBUG") == "True"
 
-ENVIRONEMENT_URL = "localhost:8000" if DEBUG else "podshift.ddns.net:8080"
-LOGGING_CONFIG["formatters"]["access"]["fmt"] = "%(asctime)s " + \
-    LOGGING_CONFIG["formatters"]["access"]["fmt"]
+DEBUG = os.getenv("DEBUG") == "True"
+ENVIRONEMENT_URL = "localhost:8000" if DEBUG else "podshift.net:8080"
+LOGGING_CONFIG["formatters"]["access"]["fmt"] = (
+    "%(asctime)s " + LOGGING_CONFIG["formatters"]["access"]["fmt"]
+)
 
 scheduler = BackgroundScheduler()
-trigger = IntervalTrigger(minutes=10, start_date=datetime.now()) if DEBUG\
+trigger = (
+    IntervalTrigger(minutes=10, start_date=datetime.now())
+    if DEBUG
     else IntervalTrigger(hours=2, start_date=datetime.now())
+)
 scheduler.add_job(updateFeeds, trigger)
 scheduler.start()
 
@@ -58,20 +65,27 @@ app.add_middleware(
 )
 
 
-@app.post('/PodShift', response_model=ResponseModel, responses={400: {"model": Detail},
-                                                                409: {"model": Detail},
-                                                                500: {"model": Detail}})
+@app.post(
+    "/PodShift",
+    response_model=ResponseModel,
+    responses={400: {"model": Detail}, 409: {
+        "model": Detail}, 500: {"model": Detail}},
+)
 async def addFeed(form: FormInputModel, session: Session = Depends(get_session)):
     try:
         url = get(form.url)
     except:
-        return JSONResponse(status_code=400, content={"detail": "The given URL isnt valid"})
+        return JSONResponse(
+            status_code=400, content={"detail": "The given URL isnt valid"}
+        )
     try:
         podcastContent = url.content.decode()
         isValidXML(podcastContent)
     except:
-        return JSONResponse(status_code=400,
-                            content={"detail": "The url content wasnt an XML containing RSS"})
+        return JSONResponse(
+            status_code=400,
+            content={"detail": "The url content wasnt an XML containing RSS"},
+        )
 
     podcastXML, episodesXMLList = extractContents(podcastContent)
 
@@ -80,7 +94,7 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
             podcastXML=podcastXML,
             podcastUrl=form.url,
             episodeListXML=episodesXMLList,
-            session=session
+            session=session,
         )
     except IntegrityError as e:
         db.rollback(session)
@@ -96,7 +110,7 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
         date=datetime.date(datetime.now()),
         interval=form.everyX,
         nbEpisodes=len(episodesXMLList),
-        amount=form.amountOfEpisode
+        amount=form.amountOfEpisode,
     )
     jsonDumps = json.dumps(listDate)
     uuid = str(uuid1())
@@ -107,13 +121,23 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
         podcast=podcast,
         amount=form.amountOfEpisode,
         uuid=uuid,
-        session=session
+        session=session,
     )
-    return JSONResponse(content=jsonable_encoder(ResponseModel(url=f"http://{ENVIRONEMENT_URL}/PodShift/{customPodcast.UUID}")))
+    return JSONResponse(
+        content=jsonable_encoder(
+            ResponseModel(
+                url=f"http://{ENVIRONEMENT_URL}/PodShift/{customPodcast.UUID}"
+            )
+        )
+    )
 
 
-@app.get("/PodShift/{customPodcastGUID}", response_class=Response, responses={200: {"content": {"application/xml": {}}},
-                                                                              404: {"model": Detail}})
+@app.get(
+    "/PodShift/{customPodcastGUID}",
+    response_class=Response,
+    responses={200: {"content": {"application/xml": {}}},
+               404: {"model": Detail}},
+)
 async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_session)):
     customFeed = db.getCustomPodcast(customPodcastGUID, session)
 
@@ -124,7 +148,104 @@ async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_sessio
         podcastContent=customFeed.podcast.xml,
         parsedDates=[parse(d) for d in json.loads(customFeed.dateToPostAt)],
         amount=customFeed.amount,
-        listEpisodes=[ep.xml for ep in customFeed.podcast.episodes]
+        listEpisodes=[ep.xml for ep in customFeed.podcast.episodes],
     )
 
     return Response(content=content, media_type="application/xml")
+
+
+@app.put(
+    "/PodShift/{customPodcastGUID}",
+    response_model=PodcastResponseModel,
+    responses={
+        200: {"content": {"application/xml": {}}},
+        404: {"model": Detail},
+        500: {"model": Detail},
+    },
+)
+async def updateCustomFeed(
+    customPodcastGUID,
+    updateModel: FormUpdateModel,
+    session: Session = Depends(get_session),
+):
+    try:
+        customFeed = db.getCustomPodcast(customPodcastGUID, session)
+
+        if customFeed is None:
+            raise NoPodcastException
+
+        newDates = dateListRRule(
+            freq=updateModel.recurrence,
+            date=datetime.date(datetime.now()),
+            interval=updateModel.everyX,
+            nbEpisodes=len(customFeed.podcast.episodes) -
+            updateModel.currentEpisode,
+            amount=updateModel.amountOfEpisode,
+        )
+
+        podcastToUpdate = CustomPodcastUpdate(
+            podcast_id=customFeed.podcast_id,
+            dateToPostAt=json.dumps(newDates),
+            amount=updateModel.amountOfEpisode,
+            freq=updateModel.recurrence,
+            interval=updateModel.everyX,
+        )
+
+        customPodcast = db.updateCustomPodcast(
+            podcastUUID=customPodcastGUID,
+            updateCustomPodcast=podcastToUpdate,
+            session=session,
+        )
+
+        response = PodcastResponseModel(
+            UUID=customPodcast.UUID,
+            freq=customPodcast.freq,
+            interval=customPodcast.interval,
+            amount=customPodcast.amount,
+        )
+        return JSONResponse(content=jsonable_encoder(response))
+    except NoPodcastException:
+        return JSONResponse(
+            status_code=404, content={"detail": "The requested podcast was not found"}
+        )
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"detail": str(e)})
+
+
+@app.delete(
+    "/PodShift/{customPodcastGUID}",
+    responses={200: {}, 404: {"model": Detail}, 500: {"model": Detail}},
+)
+async def deleteCustomPodcast(
+    customPodcastGUID: str, session: Session = Depends(get_session)
+):
+    try:
+        db.deleteCustomPodcast(customPodcastGUID, session=session)
+    except NoPodcastException:
+        return JSONResponse(
+            status_code=404, content={"detail": "The requested podcast was not found"}
+        )
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"detail": str(e)})
+
+
+@app.get(
+    "/PodShift/{customPodcastGUID}/content",
+    responses={200: {}, 404: {"model": Detail}, 500: {"model": Detail}},
+)
+async def GetCustomPodcastContent(
+    customPodcastGUID: str, session: Session = Depends(get_session)
+):
+    customPodcast = db.getCustomPodcast(
+        customPodcastGUID=customPodcastGUID, session=session)
+    if customPodcast is None:
+        return JSONResponse(
+            status_code=404, content={"detail": "The requested podcast was not found"}
+        )
+    response = PodcastResponseModel(
+        UUID=customPodcast.UUID,
+        freq=customPodcast.freq,
+        interval=customPodcast.interval,
+        amount=customPodcast.amount,
+    )
+    return JSONResponse(content=jsonable_encoder(response))

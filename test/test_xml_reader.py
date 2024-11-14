@@ -5,7 +5,13 @@ from xml.etree import ElementTree as ET
 from datetime import datetime
 from freezegun import freeze_time
 
-from utils.xml_reader import createPodcast, extractContents, extractLatestEpisode, extractTitleFromEpisode, isValidXML
+from utils.xml_reader import (
+    createPodcast,
+    extractContents,
+    extractLatestEpisode,
+    extractTitleFromEpisode,
+    isValidXML,
+)
 import pytest
 
 
@@ -105,14 +111,14 @@ def test_createPodcast():
             <guid isPermaLink="true">http://example.com/test/1723161600</guid>
             
             <pubDate>Fri, 09 Aug 2024 00:00:00 GMT</pubDate>
-        </item>"""
+        </item>""",
     ]
     parsedDates = [
         datetime(2024, 8, 5),
         datetime(2024, 8, 6),
         datetime(2024, 8, 7),
         datetime(2024, 8, 8),
-        datetime(2024, 8, 9)
+        datetime(2024, 8, 9),
     ]
     expectedCreatedFeed = """<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
@@ -172,15 +178,23 @@ def test_createPodcast():
         podcastContent=podcastContent,
         amount=1,
         listEpisodes=listEpisode,
-        parsedDates=parsedDates
+        parsedDates=parsedDates,
     )
 
-    expected = ET.tostring(ET.fromstring(etree.tostring(
-        etree.XML(expectedCreatedFeed.encode('UTF-8'), parser=parser))),
-        xml_declaration=True, encoding="unicode")
-    real = ET.tostring(ET.fromstring(
-        etree.tostring(etree.XML(test.encode("UTF-8"), parser=parser))),
-        xml_declaration=True, encoding="unicode")
+    expected = ET.tostring(
+        ET.fromstring(
+            etree.tostring(
+                etree.XML(expectedCreatedFeed.encode("UTF-8"), parser=parser)
+            )
+        ),
+        xml_declaration=True,
+        encoding="unicode",
+    )
+    real = ET.tostring(
+        ET.fromstring(etree.tostring(etree.XML(test.encode("UTF-8"), parser=parser))),
+        xml_declaration=True,
+        encoding="unicode",
+    )
     assert real == expected
 
 
@@ -280,7 +294,6 @@ def test_extractContents():
             
             <pubDate>Wed, 31 Jul 2024 00:00:00 GMT</pubDate>
         </item>""",
-
     ]
     xmlContent = """<?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:dc="http://purl.org/dc/elements/1.1/"
@@ -382,21 +395,39 @@ def test_extractContents():
 
     realPodcastContent, realListEpisode = extractContents(xmlContent)
 
-    expectedListEpisode = [ET.tostring(ET.fromstring(etree.tostring(
-        etree.XML(ep.encode('UTF-8'), parser=parser))), encoding="unicode")
-        for ep in expectedListEpisode]
+    expectedListEpisode = [
+        ET.tostring(
+            ET.fromstring(etree.tostring(etree.XML(ep.encode("UTF-8"), parser=parser))),
+            encoding="unicode",
+        )
+        for ep in expectedListEpisode
+    ]
 
-    realListEpisode = [ET.tostring(ET.fromstring(etree.tostring(
-        etree.XML(ep.encode('UTF-8'), parser=parser))), encoding="unicode")
-        for ep in realListEpisode]
+    realListEpisode = [
+        ET.tostring(
+            ET.fromstring(etree.tostring(etree.XML(ep.encode("UTF-8"), parser=parser))),
+            encoding="unicode",
+        )
+        for ep in realListEpisode
+    ]
 
-    expectedPodcastContent = ET.tostring(ET.fromstring(etree.tostring(
-        etree.XML(expectedPodcastContent.encode('UTF-8'), parser=parser))),
-        xml_declaration=True, encoding="unicode")
+    expectedPodcastContent = ET.tostring(
+        ET.fromstring(
+            etree.tostring(
+                etree.XML(expectedPodcastContent.encode("UTF-8"), parser=parser)
+            )
+        ),
+        xml_declaration=True,
+        encoding="unicode",
+    )
 
-    realPodcastContent = ET.tostring(ET.fromstring(etree.tostring(
-        etree.XML(realPodcastContent.encode('UTF-8'), parser=parser))),
-        xml_declaration=True, encoding="unicode")
+    realPodcastContent = ET.tostring(
+        ET.fromstring(
+            etree.tostring(etree.XML(realPodcastContent.encode("UTF-8"), parser=parser))
+        ),
+        xml_declaration=True,
+        encoding="unicode",
+    )
 
     assert realPodcastContent == expectedPodcastContent
     assert realListEpisode == expectedListEpisode
@@ -510,13 +541,21 @@ def test_extractLatestEpisode():
 
     parser = etree.XMLParser(remove_blank_text=True)
 
-    expectedEpisode = ET.tostring(ET.fromstring(etree.tostring(
-        etree.XML(expectedEpisode.encode('UTF-8'), parser=parser))), encoding="unicode")
+    expectedEpisode = ET.tostring(
+        ET.fromstring(
+            etree.tostring(etree.XML(expectedEpisode.encode("UTF-8"), parser=parser))
+        ),
+        encoding="unicode",
+    )
 
     realEpisode = extractLatestEpisode(xmlContent)
 
-    realEpisode = ET.tostring(ET.fromstring(etree.tostring(
-        etree.XML(realEpisode.encode('UTF-8'), parser=parser))), encoding="unicode")
+    realEpisode = ET.tostring(
+        ET.fromstring(
+            etree.tostring(etree.XML(realEpisode.encode("UTF-8"), parser=parser))
+        ),
+        encoding="unicode",
+    )
 
     assert realEpisode == expectedEpisode
 
@@ -632,14 +671,14 @@ def test_createPodcast_dateBeforeEndOfParsedList():
             <guid isPermaLink="true">http://example.com/test/1723161600</guid>
             
             <pubDate>Fri, 09 Aug 2024 00:00:00 GMT</pubDate>
-        </item>"""
+        </item>""",
     ]
     parsedDates = [
         datetime(2024, 8, 5),
         datetime(2024, 8, 6),
         datetime(2024, 8, 7),
         datetime(2024, 8, 8),
-        datetime(2024, 8, 9)
+        datetime(2024, 8, 9),
     ]
     expectedCreatedFeed = """<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
@@ -691,15 +730,23 @@ def test_createPodcast_dateBeforeEndOfParsedList():
         podcastContent=podcastContent,
         amount=1,
         listEpisodes=listEpisode,
-        parsedDates=parsedDates
+        parsedDates=parsedDates,
     )
 
-    expected = ET.tostring(ET.fromstring(etree.tostring(
-        etree.XML(expectedCreatedFeed.encode('UTF-8'), parser=parser))),
-        xml_declaration=True, encoding="unicode")
-    real = ET.tostring(ET.fromstring(
-        etree.tostring(etree.XML(test.encode("UTF-8"), parser=parser))),
-        xml_declaration=True, encoding="unicode")
+    expected = ET.tostring(
+        ET.fromstring(
+            etree.tostring(
+                etree.XML(expectedCreatedFeed.encode("UTF-8"), parser=parser)
+            )
+        ),
+        xml_declaration=True,
+        encoding="unicode",
+    )
+    real = ET.tostring(
+        ET.fromstring(etree.tostring(etree.XML(test.encode("UTF-8"), parser=parser))),
+        xml_declaration=True,
+        encoding="unicode",
+    )
     assert real == expected
 
 

@@ -23,11 +23,7 @@ def test_dateListRRule_daily_once_a_day():
 
     expected = [dt.isoformat() for dt in expectedDates]
     real = dateListRRule(
-        freq=freq,
-        date=startDate,
-        interval=everyX,
-        nbEpisodes=nbEpisodes,
-        amount=amount
+        freq=freq, date=startDate, interval=everyX, nbEpisodes=nbEpisodes, amount=amount
     )
     assert expected == real
 
@@ -48,11 +44,7 @@ def test_dateListRRule_daily_twice_a_day():
 
     expected = [dt.isoformat() for dt in expectedDates]
     real = dateListRRule(
-        freq=freq,
-        date=startDate,
-        interval=everyX,
-        nbEpisodes=nbEpisodes,
-        amount=amount
+        freq=freq, date=startDate, interval=everyX, nbEpisodes=nbEpisodes, amount=amount
     )
     assert real == expected
 
@@ -73,11 +65,7 @@ def test_dateListRRule_daily_twice_a_day_uneven():
 
     expected = [dt.isoformat() for dt in expectedDates]
     real = dateListRRule(
-        freq=freq,
-        date=startDate,
-        interval=everyX,
-        nbEpisodes=nbEpisodes,
-        amount=amount
+        freq=freq, date=startDate, interval=everyX, nbEpisodes=nbEpisodes, amount=amount
     )
     assert real == expected
 
@@ -95,11 +83,7 @@ def test_dateListRRule_daily_twice_a_day_5_3():
 
     expected = [dt.isoformat() for dt in expectedDates]
     real = dateListRRule(
-        freq=freq,
-        date=startDate,
-        interval=everyX,
-        nbEpisodes=nbEpisodes,
-        amount=amount
+        freq=freq, date=startDate, interval=everyX, nbEpisodes=nbEpisodes, amount=amount
     )
     assert real == expected
 
@@ -125,11 +109,7 @@ def test_dateListRRule_weekly_once_a_week():
 
     expected = [dt.isoformat() for dt in expectedDates]
     real = dateListRRule(
-        freq=freq,
-        date=startDate,
-        interval=everyX,
-        nbEpisodes=nbEpisodes,
-        amount=amount
+        freq=freq, date=startDate, interval=everyX, nbEpisodes=nbEpisodes, amount=amount
     )
     assert real == expected
 
@@ -145,16 +125,12 @@ def test_dateListRRule_weekly_twice_a_week():
         datetime(2024, 5, 12),
         datetime(2024, 5, 19),
         datetime(2024, 5, 26),
-        datetime(2024, 6, 2)
+        datetime(2024, 6, 2),
     ]
 
     expected = [dt.isoformat() for dt in expectedDates]
     real = dateListRRule(
-        freq=freq,
-        date=startDate,
-        interval=everyX,
-        nbEpisodes=nbEpisodes,
-        amount=amount
+        freq=freq, date=startDate, interval=everyX, nbEpisodes=nbEpisodes, amount=amount
     )
     assert real == expected
     assert 1 == 1

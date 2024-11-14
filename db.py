@@ -1,8 +1,9 @@
 from sqlmodel import create_engine, Session, select
 
-from models.custompodcast import CustomPodcast
+from models.custompodcast import CustomPodcast, CustomPodcastUpdate
 from models.podcast import Podcast
 from models.episode import Episode
+from custom_exceptions.no_podcast import NoPodcastException
 
 DATABASE_URL = "sqlite:///data/db.sqlite"
 
@@ -14,15 +15,25 @@ def get_session():
         yield session
 
 
-class Database():
+class Database:
 
-    def getCustomPodcast(self, customPodcastGUID: str, session: Session) -> CustomPodcast | None:
+    def getCustomPodcast(
+        self, customPodcastGUID: str, session: Session
+    ) -> CustomPodcast | None:
         return session.get(CustomPodcast, customPodcastGUID)
 
     def getPodcastXML(self, podcastXML: str, session: Session) -> Podcast:
-        return session.exec(select(Podcast).where(Podcast.xml == podcastXML)).one_or_none()
+        return session.exec(
+            select(Podcast).where(Podcast.xml == podcastXML)
+        ).one_or_none()
 
-    def createNewPodcast(self, podcastXML: str, podcastUrl: str, episodeListXML: list[str], session: Session) -> Podcast:
+    def createNewPodcast(
+        self,
+        podcastXML: str,
+        podcastUrl: str,
+        episodeListXML: list[str],
+        session: Session,
+    ) -> Podcast:
         podcast = Podcast(xml=podcastXML, url=podcastUrl)
         session.add(podcast)
         if episodeListXML:
@@ -33,14 +44,23 @@ class Database():
         session.refresh(podcast)
         return podcast
 
-    def createCustomPodcast(self, jsonDumpDate: str, interval: int, freq: int, podcast: Podcast, amount: int, uuid: str, session: Session) -> CustomPodcast:
+    def createCustomPodcast(
+        self,
+        jsonDumpDate: str,
+        interval: int,
+        freq: int,
+        podcast: Podcast,
+        amount: int,
+        uuid: str,
+        session: Session,
+    ) -> CustomPodcast:
         customPodcast = CustomPodcast(
             dateToPostAt=jsonDumpDate,
             interval=interval,
             freq=freq,
             podcast=podcast,
             amount=amount,
-            UUID=uuid
+            UUID=uuid,
         )
         session.add(customPodcast)
         session.commit()
@@ -52,21 +72,51 @@ class Database():
         r = session.exec(select(Podcast))
         return list(r)
 
-    def addLatestEpisode(self, latestEpisodeContent: str, podcast: Podcast, session: Session):
-        podcast.episodes.append(
-            Episode(xml=latestEpisodeContent, podcast=podcast))
+    def updateCustomPodcast(
+        self,
+        podcastUUID: str,
+        updateCustomPodcast: CustomPodcastUpdate,
+        session: Session,
+    ):
+        customPodcast = session.get(CustomPodcast, podcastUUID)
+        if customPodcast is None:
+            raise NoPodcastException()
+        podcastData = updateCustomPodcast.model_dump(exclude_unset=True)
+        customPodcast.sqlmodel_update(podcastData)
+        session.add(customPodcast)
+        session.commit()
+        session.refresh(customPodcast)
+        return customPodcast
+
+    def deleteCustomPodcast(self, podcastUUID: str, session: Session):
+        customPodcast = session.get(CustomPodcast, podcastUUID)
+        if customPodcast is None:
+            raise NoPodcastException()
+        session.delete(customPodcast)
         session.commit()
 
-    def updateSubscription(self, subscription: CustomPodcast, dateToPostAt: str, session: Session):
+    def addLatestEpisode(
+        self, latestEpisodeContent: str, podcast: Podcast, session: Session
+    ):
+        podcast.episodes.append(Episode(xml=latestEpisodeContent, podcast=podcast))
+        session.commit()
+
+    def updateEpisodeContent(
+        self, episode: Episode, episodeContent: str, session: Session
+    ):
+        episode.xml = episodeContent
+        session.commit()
+
+    def updateSubscription(
+        self, subscription: CustomPodcast, dateToPostAt: str, session: Session
+    ):
         subscription.dateToPostAt = dateToPostAt
         session.commit()
 
-    def refreshEntity(self, entity: Podcast | Episode | CustomPodcast, session: Session):
+    def refreshEntity(
+        self, entity: Podcast | Episode | CustomPodcast, session: Session
+    ):
         session.refresh(entity)
-
-    def updateEpisodeContent(self, episode: Episode, episodeContent: str, session: Session):
-        episode.xml = episodeContent
-        session.commit()
 
     def rollback(self, session: Session):
         session.rollback()
