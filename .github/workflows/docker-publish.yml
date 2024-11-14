@@ -24,5 +24,5 @@ jobs:
               run: docker build -t pilix/podshiftapi:arm64 --target prod --platform linux/arm64 .
             - name: push
               run: |
-                  docker login -u pilix -p ${{ secrets.DOCKER_HUB_TOKEN }}
+                  docker login -u pilix --password-stdin ${{ secrets.DOCKER_HUB_TOKEN }}
                   docker push pilix/podshiftapi:arm64
