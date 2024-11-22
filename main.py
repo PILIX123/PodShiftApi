@@ -31,6 +31,7 @@ from cronjob import updateFeeds
 
 
 DEBUG = os.getenv("DEBUG") == "True"
+DEBUG = True
 ENVIRONEMENT_URL = "localhost:8000" if DEBUG else "podshift.net:8080"
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = (
     "%(asctime)s " + LOGGING_CONFIG["formatters"]["access"]["fmt"]
@@ -231,7 +232,8 @@ async def deleteCustomPodcast(
 
 @app.get(
     "/PodShift/{customPodcastGUID}/content",
-    responses={200: {}, 404: {"model": Detail}, 500: {"model": Detail}},
+    responses={200: {"model": PodcastResponseModel},
+               404: {"model": Detail}, 500: {"model": Detail}},
 )
 async def GetCustomPodcastContent(
     customPodcastGUID: str, session: Session = Depends(get_session)
@@ -247,5 +249,7 @@ async def GetCustomPodcastContent(
         freq=customPodcast.freq,
         interval=customPodcast.interval,
         amount=customPodcast.amount,
+        url=customPodcast.podcast.url,
+        title=customPodcast.podcast.title,
     )
     return JSONResponse(content=jsonable_encoder(response))
