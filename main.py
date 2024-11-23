@@ -25,7 +25,7 @@ from models.updatemodel import FormUpdateModel
 from models.customerror import Detail
 from models.custompodcast import CustomPodcastUpdate
 from custom_exceptions.no_podcast import NoPodcastException
-from utils.xml_reader import createPodcast, extractContents, isValidXML
+from utils.xml_reader import createPodcast, extractContents, isValidXML, extractTitleFromRoot
 from utils.util import dateListRRule
 from cronjob import updateFeeds
 
@@ -90,11 +90,13 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
 
     podcastXML, episodesXMLList = extractContents(podcastContent)
 
+    title = extractTitleFromRoot(podcastXML)
     try:
         podcast = db.createNewPodcast(
             podcastXML=podcastXML,
             podcastUrl=form.url,
             episodeListXML=episodesXMLList,
+            title=title,
             session=session,
         )
     except IntegrityError as e:

@@ -11,6 +11,7 @@ from utils.xml_reader import (
     extractLatestEpisode,
     extractTitleFromEpisode,
     isValidXML,
+    extractTitleFromRoot
 )
 import pytest
 
@@ -191,7 +192,8 @@ def test_createPodcast():
         encoding="unicode",
     )
     real = ET.tostring(
-        ET.fromstring(etree.tostring(etree.XML(test.encode("UTF-8"), parser=parser))),
+        ET.fromstring(etree.tostring(
+            etree.XML(test.encode("UTF-8"), parser=parser))),
         xml_declaration=True,
         encoding="unicode",
     )
@@ -397,7 +399,8 @@ def test_extractContents():
 
     expectedListEpisode = [
         ET.tostring(
-            ET.fromstring(etree.tostring(etree.XML(ep.encode("UTF-8"), parser=parser))),
+            ET.fromstring(etree.tostring(
+                etree.XML(ep.encode("UTF-8"), parser=parser))),
             encoding="unicode",
         )
         for ep in expectedListEpisode
@@ -405,7 +408,8 @@ def test_extractContents():
 
     realListEpisode = [
         ET.tostring(
-            ET.fromstring(etree.tostring(etree.XML(ep.encode("UTF-8"), parser=parser))),
+            ET.fromstring(etree.tostring(
+                etree.XML(ep.encode("UTF-8"), parser=parser))),
             encoding="unicode",
         )
         for ep in realListEpisode
@@ -414,7 +418,8 @@ def test_extractContents():
     expectedPodcastContent = ET.tostring(
         ET.fromstring(
             etree.tostring(
-                etree.XML(expectedPodcastContent.encode("UTF-8"), parser=parser)
+                etree.XML(expectedPodcastContent.encode(
+                    "UTF-8"), parser=parser)
             )
         ),
         xml_declaration=True,
@@ -423,7 +428,8 @@ def test_extractContents():
 
     realPodcastContent = ET.tostring(
         ET.fromstring(
-            etree.tostring(etree.XML(realPodcastContent.encode("UTF-8"), parser=parser))
+            etree.tostring(
+                etree.XML(realPodcastContent.encode("UTF-8"), parser=parser))
         ),
         xml_declaration=True,
         encoding="unicode",
@@ -543,7 +549,8 @@ def test_extractLatestEpisode():
 
     expectedEpisode = ET.tostring(
         ET.fromstring(
-            etree.tostring(etree.XML(expectedEpisode.encode("UTF-8"), parser=parser))
+            etree.tostring(
+                etree.XML(expectedEpisode.encode("UTF-8"), parser=parser))
         ),
         encoding="unicode",
     )
@@ -552,7 +559,8 @@ def test_extractLatestEpisode():
 
     realEpisode = ET.tostring(
         ET.fromstring(
-            etree.tostring(etree.XML(realEpisode.encode("UTF-8"), parser=parser))
+            etree.tostring(
+                etree.XML(realEpisode.encode("UTF-8"), parser=parser))
         ),
         encoding="unicode",
     )
@@ -743,7 +751,8 @@ def test_createPodcast_dateBeforeEndOfParsedList():
         encoding="unicode",
     )
     real = ET.tostring(
-        ET.fromstring(etree.tostring(etree.XML(test.encode("UTF-8"), parser=parser))),
+        ET.fromstring(etree.tostring(
+            etree.XML(test.encode("UTF-8"), parser=parser))),
         xml_declaration=True,
         encoding="unicode",
     )
@@ -880,3 +889,23 @@ def test_isValidXML_Fail_Not_XML():
 """
     with pytest.raises(ET.ParseError):
         isValidXML(xmlContent)
+
+
+def test_extractTitleFromRoot():
+    podcastContent = """<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:content="http://purl.org/rss/1.0/modules/content/"
+    xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>TEST_TITLE</title>
+        <description><![CDATA[This is a constantly updating lorem ipsum feed]]></description>
+        <link>http://example.com/</link>
+        <generator>RSS for Node</generator>
+        <lastBuildDate>Fri, 09 Aug 2024 05:35:40 GMT</lastBuildDate>
+        <pubDate>Fri, 09 Aug 2024 00:00:00 GMT</pubDate>
+        <copyright><![CDATA[Michael Bertolacci, licensed under a Creative Commons Attribution 3.0 Unported License.]]></copyright>
+    </channel>
+</rss>"""
+    expectedTitle = "TEST_TITLE"
+    realTitle = extractTitleFromRoot(podcastContent)
+    assert realTitle == expectedTitle
