@@ -125,6 +125,7 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
         uuid=uuid,
         session=session,
     )
+    # TODO: Got to edit this to return all the info needed for the list to be populated
     return JSONResponse(
         content=jsonable_encoder(
             ResponseModel(
@@ -160,7 +161,7 @@ async def getCustomFeed(customPodcastGUID, session: Session = Depends(get_sessio
     "/PodShift/{customPodcastGUID}",
     response_model=PodcastResponseModel,
     responses={
-        200: {"content": {"application/xml": {}}},
+        200: {"content": {}},
         404: {"model": Detail},
         500: {"model": Detail},
     },
@@ -199,10 +200,15 @@ async def updateCustomFeed(
             session=session,
         )
 
+        if customPodcast is None:
+            raise NoPodcastException
+
         response = PodcastResponseModel(
             UUID=customPodcast.UUID,
             freq=customPodcast.freq,
             interval=customPodcast.interval,
+            url=customFeed.podcast.url,
+            title=customFeed.podcast.title,
             amount=customPodcast.amount,
         )
         return JSONResponse(content=jsonable_encoder(response))
