@@ -32,9 +32,10 @@ class Database:
         podcastXML: str,
         podcastUrl: str,
         episodeListXML: list[str],
+        title: str,
         session: Session,
     ) -> Podcast:
-        podcast = Podcast(xml=podcastXML, url=podcastUrl)
+        podcast = Podcast(xml=podcastXML, url=podcastUrl, title=title)
         session.add(podcast)
         if episodeListXML:
             for episodeXML in reversed(episodeListXML):
@@ -98,7 +99,8 @@ class Database:
     def addLatestEpisode(
         self, latestEpisodeContent: str, podcast: Podcast, session: Session
     ):
-        podcast.episodes.append(Episode(xml=latestEpisodeContent, podcast=podcast))
+        podcast.episodes.append(
+            Episode(xml=latestEpisodeContent, podcast=podcast))
         session.commit()
 
     def updateEpisodeContent(

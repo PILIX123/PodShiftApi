@@ -10,3 +10,5 @@ class PodcastResponseModel(BaseModel):
     freq: int
     interval: int
     amount: int
+    url: str
+    title: str

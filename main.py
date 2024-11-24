@@ -25,7 +25,7 @@ from models.updatemodel import FormUpdateModel
 from models.customerror import Detail
 from models.custompodcast import CustomPodcastUpdate
 from custom_exceptions.no_podcast import NoPodcastException
-from utils.xml_reader import createPodcast, extractContents, isValidXML
+from utils.xml_reader import createPodcast, extractContents, isValidXML, extractTitleFromRoot
 from utils.util import dateListRRule
 from cronjob import updateFeeds
 
@@ -89,11 +89,13 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
 
     podcastXML, episodesXMLList = extractContents(podcastContent)
 
+    title = extractTitleFromRoot(podcastXML)
     try:
         podcast = db.createNewPodcast(
             podcastXML=podcastXML,
             podcastUrl=form.url,
             episodeListXML=episodesXMLList,
+            title=title,
             session=session,
         )
     except IntegrityError as e:
@@ -231,7 +233,8 @@ async def deleteCustomPodcast(
 
 @app.get(
     "/PodShift/{customPodcastGUID}/content",
-    responses={200: {}, 404: {"model": Detail}, 500: {"model": Detail}},
+    responses={200: {"model": PodcastResponseModel},
+               404: {"model": Detail}, 500: {"model": Detail}},
 )
 async def GetCustomPodcastContent(
     customPodcastGUID: str, session: Session = Depends(get_session)
@@ -247,5 +250,7 @@ async def GetCustomPodcastContent(
         freq=customPodcast.freq,
         interval=customPodcast.interval,
         amount=customPodcast.amount,
+        url=customPodcast.podcast.url,
+        title=customPodcast.podcast.title,
     )
     return JSONResponse(content=jsonable_encoder(response))

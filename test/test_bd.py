@@ -11,7 +11,9 @@ from db import Database
 TEST_PODCAST_XML = "TEST_PODCAST_XML"
 TEST_PODCAST_XML2 = "TEST_PODCAST_XML2"
 TEST_PODCAST_URL = "TEST_PODCAST_URL"
+TEST_PODCAST_TITLE = "TEST_PODCAST_TITLE"
 TEST_PODCAST_URL2 = "TEST_PODCAST_URL2"
+TEST_PODCAST_TITLE2 = "TEST_PODCAST_TITLE2"
 TEST_EPISODE_XML = "TEST_EPISODE_XML"
 TEST_EPISODE_XML2 = "TEST_EPISODE_XML2"
 TEST_EPISODE_XML3 = "TEST_EPISODE_XML3"
@@ -29,7 +31,8 @@ TEST_UUID = "TEST_UUID"
 @pytest.fixture(scope="function")
 def session():
     DATABASE_URL = "sqlite:///:memory:"
-    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    engine = create_engine(DATABASE_URL, connect_args={
+                           "check_same_thread": False})
     SQLModel.metadata.create_all(bind=engine)
 
     with Session(engine) as session:
@@ -41,10 +44,12 @@ def createDB(session):
     podcast = Podcast(
         xml=TEST_PODCAST_XML,
         url=TEST_PODCAST_URL,
+        title=TEST_PODCAST_TITLE,
     )
     podcast2 = Podcast(
         xml=TEST_PODCAST_XML2,
         url=TEST_PODCAST_URL2,
+        title=TEST_PODCAST_TITLE2,
     )
     session.add(podcast)
     session.add(podcast2)
@@ -110,7 +115,9 @@ def test_createNewPodcast(session):
     db.createNewPodcast(
         podcastXML=TEST_PODCAST_XML,
         podcastUrl=TEST_PODCAST_URL,
-        episodeListXML=[TEST_EPISODE_XML, TEST_EPISODE_XML2, TEST_EPISODE_XML3],
+        episodeListXML=[TEST_EPISODE_XML,
+                        TEST_EPISODE_XML2, TEST_EPISODE_XML3],
+        title=TEST_PODCAST_TITLE,
         session=session,
     )
 
@@ -129,7 +136,9 @@ def test_createNewPodcast_return_entity(session):
     actual = db.createNewPodcast(
         podcastXML=TEST_PODCAST_XML,
         podcastUrl=TEST_PODCAST_URL,
-        episodeListXML=[TEST_EPISODE_XML, TEST_EPISODE_XML2, TEST_EPISODE_XML3],
+        episodeListXML=[TEST_EPISODE_XML,
+                        TEST_EPISODE_XML2, TEST_EPISODE_XML3],
+        title=TEST_PODCAST_TITLE,
         session=session,
     )
 
@@ -142,7 +151,8 @@ def test_createNewPodcast_return_entity(session):
 
 
 def test_createCustomPodcast(session):
-    podcast = Podcast(xml=TEST_PODCAST_XML, url=TEST_PODCAST_URL)
+    podcast = Podcast(xml=TEST_PODCAST_XML,
+                      url=TEST_PODCAST_URL, title=TEST_PODCAST_TITLE)
     session.add(podcast)
     session.commit()
 
@@ -170,7 +180,8 @@ def test_createCustomPodcast(session):
 
 
 def test_createCustomPodcast_return_entity(session):
-    podcast = Podcast(xml=TEST_PODCAST_XML, url=TEST_PODCAST_URL)
+    podcast = Podcast(xml=TEST_PODCAST_XML,
+                      url=TEST_PODCAST_URL, title=TEST_PODCAST_TITLE)
     session.add(podcast)
     session.commit()
 
@@ -240,18 +251,21 @@ def test_updateSubscription(session, createDB):
 
 def test_refreshEntity():
     DATABASE_URL = "sqlite:///:memory:"
-    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    engine = create_engine(DATABASE_URL, connect_args={
+                           "check_same_thread": False})
     SQLModel.metadata.create_all(bind=engine)
 
     with Session(engine) as session:
-        podcast = Podcast(xml=TEST_PODCAST_XML, url=TEST_PODCAST_URL)
+        podcast = Podcast(xml=TEST_PODCAST_XML,
+                          url=TEST_PODCAST_URL, title=TEST_PODCAST_TITLE)
         session.add(podcast)
         session.commit()
 
         podcast_id = podcast.id
 
         with Session(engine) as session2:
-            p = session2.exec(select(Podcast).where(Podcast.id == podcast_id)).one()
+            p = session2.exec(select(Podcast).where(
+                Podcast.id == podcast_id)).one()
 
             p.xml = TEST_PODCAST_XML2
             session2.add(p)

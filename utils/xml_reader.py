@@ -12,7 +12,7 @@ def createPodcast(
     channel = root.find("channel")
     channel.find("title").text = (
         f"Custom Frequency of {
-        channel.find("title").text}"
+            channel.find("title").text}"
     )
     index = 0
     for date in parsedDates:
@@ -22,7 +22,8 @@ def createPodcast(
             if i == 0 and index == 0:
                 channel.append(ET.fromstring(listEpisodes[i + index]))
             else:
-                channel.insert(-(i + index), ET.fromstring(listEpisodes[i + index]))
+                channel.insert(-(i + index),
+                               ET.fromstring(listEpisodes[i + index]))
         index += amount
 
     return ET.tostring(root, xml_declaration=True, encoding="unicode")
@@ -61,4 +62,11 @@ def extractLatestEpisode(podcastContent: str) -> str:
 def extractTitleFromEpisode(episodeContent: str) -> str:
     item = ET.fromstring(episodeContent)
     title = item.find("title").text
+    return title
+
+
+def extractTitleFromRoot(podcastContent: str) -> str:
+    root = ET.fromstring(podcastContent)
+    channel = root.find("channel")
+    title = channel.find("title").text
     return title

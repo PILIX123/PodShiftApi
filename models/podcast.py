@@ -10,9 +10,11 @@ if TYPE_CHECKING:
 class BasePodacast(SQLModel):
     xml: str = Field(default=None, unique=True)
     url: str
+    title: str
 
 
 class Podcast(BasePodacast, table=True):
     id: int = Field(default=None, primary_key=True)
     episodes: List["Episode"] = Relationship(back_populates="podcast")
-    customPodcasts: List["CustomPodcast"] = Relationship(back_populates="podcast")
+    customPodcasts: List["CustomPodcast"] = Relationship(
+        back_populates="podcast")
