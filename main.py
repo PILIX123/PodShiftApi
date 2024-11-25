@@ -125,11 +125,17 @@ async def addFeed(form: FormInputModel, session: Session = Depends(get_session))
         uuid=uuid,
         session=session,
     )
-    # TODO: Got to edit this to return all the info needed for the list to be populated
+
     return JSONResponse(
         content=jsonable_encoder(
             ResponseModel(
-                url=f"http://{ENVIRONEMENT_URL}/PodShift/{customPodcast.UUID}"
+                custom_url=f"http://{ENVIRONEMENT_URL}/PodShift/{customPodcast.UUID}",
+                url=customPodcast.podcast.url,
+                UUID=customPodcast.UUID,
+                title=customPodcast.podcast.title,
+                frequence=customPodcast.freq,
+                interval=customPodcast.interval,
+                amount=customPodcast.amount
             )
         )
     )
