@@ -18,7 +18,7 @@ jobs:
             - name: Set up QEMU for ARM64
               run: |
                   sudo apt-get update
-                  sudo apt-get install -y qemu binfmt-support qemu-user-static
+                  sudo apt-get install -y qemu-system binfmt-support qemu-user-static
                   docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
             - name: build image
               run: docker build -t pilix/podshiftapi:arm64 --target prod --platform linux/arm64 .
