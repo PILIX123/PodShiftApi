@@ -11,6 +11,10 @@ from uvicorn.config import LOGGING_CONFIG
 from requests import get
 from dateutil.parser import parse
 from sqlalchemy.exc import IntegrityError
+from alembic import config, script
+from alembic.runtime import migration
+from sqlalchemy.engine import Engine
+
 
 from sqlmodel import Session
 from contextlib import asynccontextmanager
@@ -18,7 +22,7 @@ from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
-from db import get_session, Database
+from db import get_session, Database, engine
 from models.forminputmodel import FormInputModel
 from models.responsemodel import ResponseModel, PodcastResponseModel
 from models.updatemodel import FormUpdateModel
@@ -31,6 +35,7 @@ from cronjob import updateFeeds
 
 
 DEBUG = os.getenv("DEBUG") == "True"
+DEBUG = True
 ENVIRONEMENT_URL = "localhost:8000" if DEBUG else "podshift.net:8080"
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = (
     "%(asctime)s " + LOGGING_CONFIG["formatters"]["access"]["fmt"]
@@ -50,6 +55,22 @@ scheduler.start()
 async def lifespan(app: FastAPI):
     yield
     scheduler.shutdown()
+
+
+cfg = config.Config("alembic.ini")
+
+
+def check_current_head(alembic_cfg: config.Config, connectable: Engine):
+    directory = script.ScriptDirectory.from_config(alembic_cfg)
+    with connectable.begin() as connection:
+        context = migration.MigrationContext.configure(connection)
+        return set(context.get_current_heads()) == set(directory.get_heads())
+
+
+need_update = check_current_head(cfg, engine)
+if need_update:
+    from migrations import env
+    env.run_migrations_online()
 
 
 docs_url = "/docs" if DEBUG else None
