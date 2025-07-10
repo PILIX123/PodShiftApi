@@ -1,4 +1,9 @@
 from sqlmodel import create_engine, Session, select
+from sqlalchemy.engine import Engine
+from alembic import config, script
+from alembic.runtime import migration
+
+from migrations import env
 
 from models.custompodcast import CustomPodcast, CustomPodcastUpdate
 from models.podcast import Podcast
@@ -8,6 +13,19 @@ from custom_exceptions.no_podcast import NoPodcastException
 DATABASE_URL = "sqlite:///data/db.sqlite"
 
 engine = create_engine(DATABASE_URL)
+cfg = config.Config("alembic.ini")
+
+
+def check_current_head(alembic_cfg: config.Config, connectable: Engine):
+    directory = script.ScriptDirectory.from_config(alembic_cfg)
+    with connectable.begin() as connection:
+        context = migration.MigrationContext.configure(connection)
+        return set(context.get_current_heads()) == set(directory.get_heads())
+
+
+need_update = check_current_head(cfg, engine)
+if need_update:
+    env.run_migrations_online()
 
 
 def get_session():

@@ -31,6 +31,7 @@ from cronjob import updateFeeds
 
 
 DEBUG = os.getenv("DEBUG") == "True"
+DEBUG = True
 ENVIRONEMENT_URL = "localhost:8000" if DEBUG else "podshift.net:8080"
 LOGGING_CONFIG["formatters"]["access"]["fmt"] = (
     "%(asctime)s " + LOGGING_CONFIG["formatters"]["access"]["fmt"]
