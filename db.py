@@ -3,7 +3,6 @@ from sqlalchemy.engine import Engine
 from alembic import config, script
 from alembic.runtime import migration
 
-from migrations import env
 
 from models.custompodcast import CustomPodcast, CustomPodcastUpdate
 from models.podcast import Podcast
@@ -25,6 +24,7 @@ def check_current_head(alembic_cfg: config.Config, connectable: Engine):
 
 need_update = check_current_head(cfg, engine)
 if need_update:
+    from migrations import env
     env.run_migrations_online()
 
 
